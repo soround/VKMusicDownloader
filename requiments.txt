@@ -1,0 +1,4 @@
+numpy
+pyqt5
+pyqt5-tools
+wget
