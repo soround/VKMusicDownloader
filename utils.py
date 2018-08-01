@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 import datetime
 import json
@@ -11,6 +12,12 @@ import socket
 import wget
 
 import vkapi
+
+
+def remove_forbidden_characters(filename):
+	filename = re.sub(r'[\/:;*?!<>|«»",]', "", filename)
+	return filename
+
 
 
 def check_file_path(path):
