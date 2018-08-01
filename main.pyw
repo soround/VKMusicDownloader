@@ -169,7 +169,7 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 self.completed += 1
                 song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
-                filename = PATH + "/"  + song_name + ".mp3"
+                filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
                 url = data['response']['items'][item-1]['url']
 
                 self.label_3.setText(f"Загружается: {song_name}")
@@ -203,9 +203,9 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def Donate(self):
         QMessageBox.about(self, "Помощь проекту", 
-            "<b>Дать разработчику на чай</b>(выделите для копирования реквизитов)" 
+            "<b>Дать разработчику на чай</b>" 
             + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
-            + "<br><b>Яндекс.Деньги: </b> 410017272872402")
+            + "<br><b>Яндекс.Деньги: </b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>")
 
 
     def TechInformation(self):
@@ -220,7 +220,6 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         if reply == QMessageBox.Yes:
             os.remove("DATA")
             os.remove("response.json")
-            self.close()
         else:
             pass
 
