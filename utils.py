@@ -15,7 +15,11 @@ import vkapi
 
 
 def remove_forbidden_characters(filename):
+<<<<<<< HEAD
 	filename = re.sub(r'[\/:;*?<>|«»",]', "", filename)
+=======
+	filename = re.sub(r'[\/:;*?!<>|«»",]', "", filename)
+>>>>>>> 6024255a9d7b11cfbe15ea2339f45c4bef7b63fb
 	return filename
 
 
