@@ -48,6 +48,7 @@ class Ui_Form(object):
         # self.label.setOpenExternalLinks(True)
         self.label.setText(_translate("Form", "Внутренний IP: " + str(utils.internal_ip())))
         self.label_2.setText(_translate("Form", "Внешний IP: " + str(utils.external_ip())))
+        
         if utils.check_connection(vkapi.HOST_API):
             self.label_3.setText(_translate("Form",
              "Хост: [" + vkapi.HOST_API + "] - Доступен"))

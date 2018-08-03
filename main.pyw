@@ -35,7 +35,7 @@ sys.argv += ['--style', 'fusion']
 PATH = os.getcwd()
 
 # Окно авторизации
-class Auth(QWidget, auth.Ui_Form):
+class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
@@ -49,14 +49,25 @@ class Auth(QWidget, auth.Ui_Form):
             login = self.lineEdit.text()
             password = self.lineEdit_2.text()
             
-            r = vkapi.autorization(login, password, vkapi.client_keys[0][0], vkapi.client_keys[0][1])
+            if (self.action.isChecked()):
+                r = vkapi.autorization(login, password, 
+                    vkapi.client_keys[0][0], vkapi.client_keys[0][1], vkapi.OAUTH_PROXY)
+            else:
+                r = vkapi.autorization(login, password, 
+                    vkapi.client_keys[0][0], vkapi.client_keys[0][1], vkapi.OAUTH)
+
             # QMessageBox.about(self, "Message", str(r))
             json_str = json.dumps(r)
             resp = json.loads(json_str)
             
             if (resp.get('access_token') != None):
                 access_token = resp['access_token']
-                getRefreshToken = vkapi.refreshToken(access_token)
+
+                if (self.action.isChecked()):
+                    getRefreshToken = vkapi.refreshToken(access_token, vkapi.HOST_API_PROXY)
+                else:
+                    getRefreshToken = vkapi.refreshToken(access_token, vkapi.HOST_API)   
+                    
                 refresh_token = getRefreshToken["response"]["token"]
 
                 DATA = {'access_token': access_token, 'token': refresh_token}
@@ -115,16 +126,20 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             access_token = data_token["access_token"]
             refresh_token = data_token["token"]
             try:
-                data = vkapi.get_audio(refresh_token)
-                QApplication.processEvents()
+                if(self.action_5.isChecked()):
+                    data = vkapi.get_audio(refresh_token, vkapi.HOST_API_PROXY)
+                else:
+                    data = vkapi.get_audio(refresh_token, vkapi.HOST_API)
+
                 utils.save_json('response.json', data)
 
                 count_track = data['response']['count']
                 i = 0
 
+                #QtWidgets.QTreeWidget.clear()
+
                 for count in data['response']['items']:
                     test = QtWidgets.QTreeWidgetItem(self.treeWidget)
-
                     test.setText(0, str(i+1))
                     test.setText(1, data['response']['items'][i]['artist'])
                     test.setText(2, data['response']['items'][i]['title'])
@@ -166,29 +181,34 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             QApplication.processEvents()
             
             for item in downloads_list:
-                self.completed += 1
-                song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
+                try:
+                    self.completed += 1
+                    song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
-                filename = PATH + "/"  + song_name + ".mp3"
-                url = data['response']['items'][item-1]['url']
+                    filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
+                    url = data['response']['items'][item-1]['url']
 
-                self.label_3.setText(f"Загружается: {song_name}")
-                self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
-                    + "  Выбрано: " + str(np.size(downloads_list)) 
-                    + "  Загружено: "+ str(self.completed))
+                    self.label_3.setText(f"Загружается: {song_name}")
+                    self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
+                        + "  Выбрано: " + str(np.size(downloads_list)) 
+                        + "  Загружено: "+ str(self.completed))
 
-                if (data['response']['items'][item-1]['url'] == ""):
-                    QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
-                        + song_name + " недоступна в вашем регионе") 
-                else:
-                    utils.downloads_files_in_wget(url, filename)
+                    if (data['response']['items'][item-1]['url'] == ""):
+                        QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
+                            + song_name + " недоступна в вашем регионе") 
+                    else:
+                        QApplication.processEvents()
+                        utils.downloads_files_in_wget(url, filename)
 
-                self.progressBar.setValue(self.completed)
+                    self.progressBar.setValue(self.completed)
             
-            if (np.size(downloads_list) == 0):
-                QMessageBox.information(self, "Информация", "Ничего не выбрано")
-            else:
-                QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
+                    if (np.size(downloads_list) == 0):
+                        QMessageBox.information(self, "Информация", "Ничего не выбрано")
+                    else:
+                        QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
+                        
+                except Exception as e:
+                    continue
    
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(e))
@@ -203,9 +223,9 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def Donate(self):
         QMessageBox.about(self, "Помощь проекту", 
-            "<b>Дать разработчику на чай</b>(выделите для копирования реквизитов)" 
+            "<b>Дать разработчику на чай</b>" 
             + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
-            + "<br><b>Яндекс.Деньги: </b> 410017272872402")
+            + "<br><b>Яндекс.Деньги: </b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>")
 
 
     def TechInformation(self):
