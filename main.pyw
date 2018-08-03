@@ -181,7 +181,7 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             QApplication.processEvents()
             
             for item in downloads_list:
-<<<<<<< HEAD
+
                 try:
                     self.completed += 1
                     song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
@@ -202,7 +202,7 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                         utils.downloads_files_in_wget(url, filename)
 
                     self.progressBar.setValue(self.completed)
-=======
+
                 self.completed += 1
                 song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
@@ -221,7 +221,6 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     utils.downloads_files_in_wget(url, filename)
 
                 self.progressBar.setValue(self.completed)
->>>>>>> 6024255a9d7b11cfbe15ea2339f45c4bef7b63fb
             
                     if (np.size(downloads_list) == 0):
                         QMessageBox.information(self, "Информация", "Ничего не выбрано")
