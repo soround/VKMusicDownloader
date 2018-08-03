@@ -203,24 +203,24 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
                     self.progressBar.setValue(self.completed)
 
-                self.completed += 1
-                song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
+                    self.completed += 1
+                    song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
-                filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
-                url = data['response']['items'][item-1]['url']
+                    filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
+                    url = data['response']['items'][item-1]['url']
 
-                self.label_3.setText(f"Загружается: {song_name}")
-                self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
-                    + "  Выбрано: " + str(np.size(downloads_list)) 
-                    + "  Загружено: "+ str(self.completed))
+                    self.label_3.setText(f"Загружается: {song_name}")
+                    self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
+                        + "  Выбрано: " + str(np.size(downloads_list)) 
+                        + "  Загружено: "+ str(self.completed))
 
-                if (data['response']['items'][item-1]['url'] == ""):
-                    QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
-                        + song_name + " недоступна в вашем регионе") 
-                else:
-                    utils.downloads_files_in_wget(url, filename)
+                    if (data['response']['items'][item-1]['url'] == ""):
+                        QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
+                            + song_name + " недоступна в вашем регионе") 
+                    else:
+                        utils.downloads_files_in_wget(url, filename)
 
-                self.progressBar.setValue(self.completed)
+                    self.progressBar.setValue(self.completed)
             
                     if (np.size(downloads_list) == 0):
                         QMessageBox.information(self, "Информация", "Ничего не выбрано")
