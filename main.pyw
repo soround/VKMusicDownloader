@@ -125,7 +125,9 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
             access_token = data_token["access_token"]
             refresh_token = data_token["token"]
+
             try:
+                
                 if(self.action_5.isChecked()):
                     data = vkapi.get_audio(refresh_token, vkapi.HOST_API_PROXY)
                 else:
@@ -140,6 +142,7 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
                 for count in data['response']['items']:
                     test = QtWidgets.QTreeWidgetItem(self.treeWidget)
+
                     test.setText(0, str(i+1))
                     test.setText(1, data['response']['items'][i]['artist'])
                     test.setText(2, data['response']['items'][i]['title'])
@@ -179,56 +182,33 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             count_track = data['response']['count']
 
             QApplication.processEvents()
-            
+            if (np.size(downloads_list) == 0):
+                    QMessageBox.information(self, "Информация", "Ничего не выбрано")
+                    
             for item in downloads_list:
 
-                try:
-                    self.completed += 1
-                    song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
+                self.completed += 1
+                song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
-                    filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
-                    url = data['response']['items'][item-1]['url']
+                filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
+                url = data['response']['items'][item-1]['url']
 
-                    self.label_3.setText(f"Загружается: {song_name}")
-                    self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
-                        + "  Выбрано: " + str(np.size(downloads_list)) 
-                        + "  Загружено: "+ str(self.completed))
+                self.label_3.setText(f"Загружается: {song_name}")
+                self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
+                    + "  Выбрано: " + str(np.size(downloads_list)) 
+                    + "  Загружено: "+ str(self.completed))
 
-                    if (data['response']['items'][item-1]['url'] == ""):
-                        QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
-                            + song_name + " недоступна в вашем регионе") 
-                    else:
-                        QApplication.processEvents()
-                        utils.downloads_files_in_wget(url, filename)
-
-                    self.progressBar.setValue(self.completed)
-
-                    self.completed += 1
-                    song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
-
-                    filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
-                    url = data['response']['items'][item-1]['url']
-
-                    self.label_3.setText(f"Загружается: {song_name}")
-                    self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
-                        + "  Выбрано: " + str(np.size(downloads_list)) 
-                        + "  Загружено: "+ str(self.completed))
-
-                    if (data['response']['items'][item-1]['url'] == ""):
-                        QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
-                            + song_name + " недоступна в вашем регионе") 
-                    else:
-                        utils.downloads_files_in_wget(url, filename)
+                if (data['response']['items'][item-1]['url'] == ""):
+                    QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
+                        + song_name + " недоступна в вашем регионе") 
+                else:
+                    QApplication.processEvents()
+                    utils.downloads_files_in_wget(url, filename)
 
                     self.progressBar.setValue(self.completed)
-            
-                    if (np.size(downloads_list) == 0):
-                        QMessageBox.information(self, "Информация", "Ничего не выбрано")
-                    else:
-                        QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
+
+            QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
                         
-                except Exception as e:
-                    continue
    
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(e))
