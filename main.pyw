@@ -28,6 +28,8 @@ locale.setlocale(locale.LC_ALL, "")
 window = None
 # Техническая информация(окно)
 tech_info_window = None
+# Окно авторизации
+auth_window = None
 
 # стиль окна
 sys.argv += ['--style', 'fusion']
@@ -238,9 +240,14 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         reply = QMessageBox.question(self, "Выход из аккаунта",
          "Вы точно хотите выйти из аккаунта?", 
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
         if reply == QMessageBox.Yes:
             os.remove("DATA")
             os.remove("response.json")
+
+            self.auth_window = Auth()
+            self.auth_window.show()
+            self.hide()
         else:
             pass
 
