@@ -49,32 +49,32 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
             login = self.lineEdit.text()
             password = self.lineEdit_2.text()
             
-            if (self.action.isChecked()):
-                r = vkapi.autorization(login, password, 
-                    vkapi.client_keys[0][0], vkapi.client_keys[0][1], vkapi.OAUTH_PROXY)
+            if self.action.isChecked():
+                path_oauth = vkapi.OAUTH_PROXY
+                path_api = vkapi.HOST_API_PROXY
             else:
-                r = vkapi.autorization(login, password, 
-                    vkapi.client_keys[0][0], vkapi.client_keys[0][1], vkapi.OAUTH)
+                path_oauth = vkapi.OAUTH
+                path_api = vkapi.HOST_API
 
+            r = vkapi.autorization(login, password, 
+                vkapi.client_keys[0][0], vkapi.client_keys[0][1], path_oauth)
+            
             # QMessageBox.about(self, "Message", str(r))
+
             json_str = json.dumps(r)
             resp = json.loads(json_str)
             
             if (resp.get('access_token') != None):
                 access_token = resp['access_token']
 
-                if (self.action.isChecked()):
-                    getRefreshToken = vkapi.refreshToken(access_token, vkapi.HOST_API_PROXY)
-                else:
-                    getRefreshToken = vkapi.refreshToken(access_token, vkapi.HOST_API)   
-                    
+                getRefreshToken = vkapi.refreshToken(access_token, path_api)         
                 refresh_token = getRefreshToken["response"]["token"]
 
                 DATA = {'access_token': access_token, 'token': refresh_token}
                 utils.save_json("DATA", DATA)
 
                 #Запуск главного окна
-                self.window = Example()
+                self.window = MainWindow()
                 self.hide()
                 self.window.show()
 
@@ -84,7 +84,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(r))
-            #self.window = Example()
+            #self.window = MainWindow()
             #self.hide()
             #self.window.show()
 
@@ -104,7 +104,7 @@ class TechInfo(QWidget, tech_info.Ui_Form):
 
 
 # Главное окно приложения         
-class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
+class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     
     def __init__(self):
         super().__init__()
@@ -127,12 +127,13 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             refresh_token = data_token["token"]
 
             try:
-                
+ 
                 if(self.action_5.isChecked()):
-                    data = vkapi.get_audio(refresh_token, vkapi.HOST_API_PROXY)
+                    path_api = vkapi.HOST_API_PROXY
                 else:
-                    data = vkapi.get_audio(refresh_token, vkapi.HOST_API)
+                    path_api = vkapi.HOST_API
 
+                data = vkapi.get_audio(refresh_token, path_api)
                 utils.save_json('response.json', data)
 
                 count_track = data['response']['count']
@@ -171,7 +172,7 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.completed = 0
             downloads_list = []
             getSelected = self.treeWidget.selectedItems()
-
+            
             for i in getSelected:
                 downloads_list.append(int(i.text(0)))
 
@@ -182,11 +183,13 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             count_track = data['response']['count']
 
             QApplication.processEvents()
-            if (np.size(downloads_list) == 0):
-                    QMessageBox.information(self, "Информация", "Ничего не выбрано")
-                    
-            for item in downloads_list:
 
+            if (np.size(downloads_list) == 0):
+                    QMessageBox.information(self, "Информация",
+                     "Ничего не выбрано. Может у вас нету аудиозаписей?")
+
+            for item in downloads_list:
+                
                 self.completed += 1
                 song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
@@ -208,24 +211,22 @@ class Example(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     self.progressBar.setValue(self.completed)
 
             QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
-                        
-   
+                         
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(e))
     # self.treeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents) не потерять
 
 
     def AboutMessage(self):
-        QMessageBox.about(self, "О программе", "<b>" + config.ApplicationName + "</b> - "
-        + config.Description + "<br><br><b>Версия: </b>" + config.ApplicationVersion
+        QMessageBox.about(self, "О программе", "<b>" + config.ApplicationName 
+        + "</b> - " + config.Description + "<br><br><b>Версия: </b>" + config.ApplicationVersion
         + "<br><b>Стадия: </b> " + config.ApplicationBranch)
 
 
     def Donate(self):
-        QMessageBox.about(self, "Помощь проекту", 
-            "<b>Дать разработчику на чай</b>" 
-            + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
-            + "<br><b>Яндекс.Деньги: </b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>")
+        QMessageBox.about(self, "Помощь проекту", "<b>Дать разработчику на чай</b>" 
+        + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
+        + "<br><b>Яндекс.Деньги: </b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>")
 
 
     def TechInformation(self):
@@ -250,7 +251,7 @@ def start():
         path = "DATA"
         app = QApplication(sys.argv)
         if (utils.check_file_path(path)):
-            ex = Example()
+            ex = MainWindow()
             ex.show()
             sys.exit(app.exec_())
         else:
