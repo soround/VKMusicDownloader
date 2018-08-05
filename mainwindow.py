@@ -129,10 +129,7 @@ class Ui_MainWindow(object):
 
         self.menu_2 = QtWidgets.QMenu(self.menubar)
         self.menu_2.setObjectName("menu_2")
-<<<<<<< HEAD
 
-=======
->>>>>>> 38cca67c68455354d4eee9242ecf8d3292b9d4c1
         self.menu_3 = QtWidgets.QMenu(self.menubar)
         self.menu_3.setObjectName("menu_3")
         MainWindow.setMenuBar(self.menubar)
@@ -161,14 +158,14 @@ class Ui_MainWindow(object):
         self.menu_2.addAction(self.action_4)
         self.menu_2.addAction(self.action_3)
         self.menu_2.addAction(self.action)
-<<<<<<< HEAD
+
 
         self.menu_3.addAction(self.action_5)
         self.menu_3.addAction(self.action_7)
 
-=======
+
         self.menu_3.addAction(self.action_5)
->>>>>>> 38cca67c68455354d4eee9242ecf8d3292b9d4c1
+
         self.menubar.addAction(self.menu.menuAction())
         self.menubar.addAction(self.menu_3.menuAction())
         self.menubar.addAction(self.menu_2.menuAction())
