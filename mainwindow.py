@@ -118,33 +118,57 @@ class Ui_MainWindow(object):
         self.treeWidget.raise_()
         self.frame_2.raise_()
         self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 708, 21))
         self.menubar.setObjectName("menubar")
+
         self.menu = QtWidgets.QMenu(self.menubar)
         self.menu.setObjectName("menu")
+
         self.menu_2 = QtWidgets.QMenu(self.menubar)
         self.menu_2.setObjectName("menu_2")
+<<<<<<< HEAD
+
+=======
+>>>>>>> 38cca67c68455354d4eee9242ecf8d3292b9d4c1
         self.menu_3 = QtWidgets.QMenu(self.menubar)
         self.menu_3.setObjectName("menu_3")
         MainWindow.setMenuBar(self.menubar)
+
         self.action = QtWidgets.QAction(MainWindow)
         self.action.setObjectName("action")
+
         self.action_2 = QtWidgets.QAction(MainWindow)
         self.action_2.setObjectName("action_2")
+        
         self.action_3 = QtWidgets.QAction(MainWindow)
         self.action_3.setObjectName("action_3")
+
         self.action_4 = QtWidgets.QAction(MainWindow)
         self.action_4.setObjectName("action_4")
+
         self.action_5 = QtWidgets.QAction(MainWindow)
         self.action_5.setObjectName("action_5")
         self.action_5.setCheckable(True)
+
+        self.action_7 = QtWidgets.QAction(MainWindow)
+        self.action_7.setObjectName("action_7")
+        self.action_7.setCheckable(True)
+
         self.menu.addAction(self.action_2)
         self.menu_2.addAction(self.action_4)
         self.menu_2.addAction(self.action_3)
         self.menu_2.addAction(self.action)
+<<<<<<< HEAD
+
         self.menu_3.addAction(self.action_5)
+        self.menu_3.addAction(self.action_7)
+
+=======
+        self.menu_3.addAction(self.action_5)
+>>>>>>> 38cca67c68455354d4eee9242ecf8d3292b9d4c1
         self.menubar.addAction(self.menu.menuAction())
         self.menubar.addAction(self.menu_3.menuAction())
         self.menubar.addAction(self.menu_2.menuAction())
@@ -177,4 +201,5 @@ class Ui_MainWindow(object):
         self.action_3.setText(_translate("MainWindow", "Помощь проекту"))
         self.action_4.setText(_translate("MainWindow", "Техническая информация"))
         self.action_5.setText(_translate("MainWindow", "Включить прокси"))
+        self.action_7.setText(_translate("MainWindow", "Выбрать папку для скачивания"))
 
