@@ -16,7 +16,7 @@ import auth
 import tech_info
 import mainwindow
 
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QMessageBox
+from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QMessageBox, QFileDialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
@@ -33,8 +33,7 @@ auth_window = None
 
 # стиль окна
 sys.argv += ['--style', 'fusion']
-# Путь для скачивания
-PATH = os.getcwd()
+
 
 # Окно авторизации
 class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
@@ -169,8 +168,30 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             QMessageBox.critical(self, "F*CK", str(data))
 
 
+
     def Downloads(self):
         try:
+            if (self.action_7.isChecked()):
+                PATH = QFileDialog.getExistingDirectory(
+                    self, "Выберите папку для скачивания", "", 
+                    QFileDialog.ShowDirsOnly
+                )
+
+                if PATH == "":
+                    QMessageBox.warning(
+                        self, "Внимание",
+                        "Вы не выбрали папку для скачивания, поэтому "+
+                        "аудиозапиcи будут загружены в директорию с программой"
+                    )
+
+                    PATH = os.getcwd()
+
+                self.label_2.setText("Путь для скачивания: " + PATH)
+
+            else:
+                PATH = os.getcwd()
+                self.label_2.setText("Путь для скачивания: " + PATH)
+
             self.completed = 0
             downloads_list = []
             getSelected = self.treeWidget.selectedItems()
@@ -188,7 +209,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
             if (np.size(downloads_list) == 0):
                     QMessageBox.information(self, "Информация",
-                     "Ничего не выбрано. Может у вас нету аудиозаписей?")
+                     "Ничего не выбрано.")
 
             for item in downloads_list:
                 
@@ -216,25 +237,33 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                          
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(e))
-    # self.treeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents) не потерять
 
 
     def AboutMessage(self):
-        QMessageBox.about(self, "О программе", "<b>" + config.ApplicationName 
-        + "</b> - " + config.Description + "<br><br><b>Версия: </b>" + config.ApplicationVersion
-        + "<br><b>Стадия: </b> " + config.ApplicationBranch)
+        QMessageBox.about(
+            self, "О программе",
+             "<b>" + config.ApplicationName 
+            + "</b> - " + config.Description + "<br><br><b>Версия: </b>"
+            + config.ApplicationVersion
+            + "<br><b>Стадия: </b> " 
+            + config.ApplicationBranch
+        )
 
 
     def Donate(self):
-        QMessageBox.about(self, "Помощь проекту", "<b>Дать разработчику на чай</b>" 
-        + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
-        + "<br><b>Яндекс.Деньги: </b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>")
+        QMessageBox.about(
+            self, "Помощь проекту",
+            "<b>Дать разработчику на чай</b>" 
+            + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
+            + "<br><b>Яндекс.Деньги:"
+            + "</b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>"
+        )
 
 
     def TechInformation(self):
         self.tech_info_window = TechInfo()
         self.tech_info_window.show()
-        
+
 
     def Logout(self):
         reply = QMessageBox.question(self, "Выход из аккаунта",
@@ -257,6 +286,7 @@ def start():
         sys.dont_write_bytecode = True
         path = "DATA"
         app = QApplication(sys.argv)
+
         if (utils.check_file_path(path)):
             ex = MainWindow()
             ex.show()
