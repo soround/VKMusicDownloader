@@ -114,6 +114,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.pushButton_2.clicked.connect(self.LoadsListMusic)
         self.pushButton.clicked.connect(self.Downloads)
         self.action.triggered.connect(self.AboutMessage)
+        self.action_2.setShortcut("Ctrl+Q")
         self.action_2.triggered.connect(self.Logout)
         self.action_3.triggered.connect(self.Donate)
         self.action_4.triggered.connect(self.TechInformation)
@@ -141,7 +142,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 i = 0
 
                 #QtWidgets.QTreeWidget.clear()
-
                 for count in data['response']['items']:
                     test = QtWidgets.QTreeWidgetItem(self.treeWidget)
 
@@ -160,13 +160,11 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     i += 1
 
                 self.label.setText(f"Всего аудиозаписей: {count_track}  Выбрано: {0}  Загружено: {0}")
-                
             except Exception as e:
                 QMessageBox.critical(self, "F*CK", str(data))
 
         except OSError as e:
             QMessageBox.critical(self, "F*CK", str(data))
-
 
 
     def Downloads(self):
