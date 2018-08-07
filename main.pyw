@@ -19,7 +19,7 @@ import mainwindow
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QMessageBox, QFileDialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, Qt
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -42,7 +42,12 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
+        self.setWindowFlags(Qt.WindowCloseButtonHint |
+                            Qt.WindowMinimizeButtonHint)
+        self.statusBar()
+        
         self.pushButton.clicked.connect(self.autorizations)
+        self.pushButton.setShortcut("Return")
 
 
     def autorizations(self):
@@ -57,16 +62,20 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 path_oauth = vkapi.OAUTH
                 path_api = vkapi.HOST_API
 
+            self.statusBar().showMessage('Loading...')
+
             r = vkapi.autorization(login, password, 
                 vkapi.client_keys[0][0], vkapi.client_keys[0][1], path_oauth)
             
             # QMessageBox.about(self, "Message", str(r))
-
+            
             json_str = json.dumps(r)
             resp = json.loads(json_str)
             
             if (resp.get('access_token') != None):
                 access_token = resp['access_token']
+
+                self.statusBar().showMessage('Getting refresh_token')
 
                 getRefreshToken = vkapi.refreshToken(access_token, path_api)         
                 refresh_token = getRefreshToken["response"]["token"]
@@ -80,10 +89,12 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 self.window.show()
 
             else:
+                self.statusBar().showMessage('Login failed :(')
                 QMessageBox.critical(self, "F*CK", str(resp))
                 
 
         except Exception as e:
+            self.statusBar().showMessage('Login failed :(')
             QMessageBox.critical(self, "F*CK", str(r))
             #self.window = MainWindow()
             #self.hide()
@@ -97,8 +108,11 @@ class TechInfo(QWidget, tech_info.Ui_Form):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
-        self.pushButton_3.clicked.connect(self.exit)
+        self.setWindowFlags(Qt.WindowCloseButtonHint |
+                            Qt.WindowMinimizeButtonHint)
 
+        self.pushButton_3.clicked.connect(self.exit)
+        self.pushButton_3.setShortcut("Return")
 
     def exit(self):
         self.close()
@@ -111,6 +125,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
+        self.setWindowFlags(QtCore.Qt.Window)
         self.pushButton_2.clicked.connect(self.LoadsListMusic)
         self.pushButton.clicked.connect(self.Downloads)
         self.action.triggered.connect(self.AboutMessage)
@@ -129,7 +144,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             refresh_token = data_token["token"]
 
             try:
- 
                 if(self.action_5.isChecked()):
                     path_api = vkapi.HOST_API_PROXY
                 else:
