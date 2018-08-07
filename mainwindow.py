@@ -6,6 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+
 import os
 import config
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -176,6 +177,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", f"{config.ApplicationName} {config.ApplicationVersion} {config.ApplicationBranch}"))
+        #MainWindow.setWindowFlags(Qt.WindowMaximazeButtonHint)
+
         self.treeWidget.setSortingEnabled(False)
         self.treeWidget.headerItem().setText(0, _translate("MainWindow", "Номер"))
         self.treeWidget.headerItem().setText(1, _translate("MainWindow", "Исполнитель"))
