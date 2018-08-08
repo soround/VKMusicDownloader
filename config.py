@@ -8,3 +8,6 @@ Description =  "Кроссплатформенный клиент для мас�
 
 IconPath = "assets/icon/vk_downloader_icon.png"
 IconPathV2 = "assets/icon/downloader_icon.png"
+
+Qiwi = 'https://qiwi.me/keyzt'
+YandexMoney = 'https://money.yandex.ru/to/410017272872402'
