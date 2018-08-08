@@ -11,14 +11,10 @@ import requests
 import socket
 import wget
 
-import vkapi
 
-
-def remove_forbidden_characters(filename):
-
+def remove_symbols(filename):
 	filename = re.sub(r'[\/:;*?<>|«»",]', "", filename)
 	return filename
-
 
 
 def check_file_path(path):
@@ -33,12 +29,12 @@ def check_file_path(path):
 def check_connection(url):
 	try:
 		requests.get(url, timeout=5)
-
 	except Exception as e:
 		return False
 		
 	return True
-
+	
+	
 def internal_ip():
 	return socket.gethostbyname(socket.getfqdn())
 
