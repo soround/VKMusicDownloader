@@ -179,10 +179,10 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 self.label.setText(f"Всего аудиозаписей: {count_track}  Выбрано: {0}  Загружено: {0}")
 
             except Exception as e:
-                QMessageBox.critical(self, "F*CK", str(e))
+                QMessageBox.critical(self, "F*CK", str(data))
 
         except OSError as e:
-            QMessageBox.critical(self, "F*CK", str(data))
+            QMessageBox.critical(self, "F*CK", str(e))
 
 
     def Downloads(self):
