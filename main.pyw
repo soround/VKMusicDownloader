@@ -16,7 +16,8 @@ import auth
 import tech_info
 import mainwindow
 
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, \
+     QMessageBox, QFileDialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, Qt
@@ -63,7 +64,6 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 path_api = vkapi.HOST_API
 
             self.statusBar().showMessage('Loading...')
-
             r = vkapi.autorization(login, password, 
                 vkapi.client_keys[0][0], vkapi.client_keys[0][1], path_oauth)
             
@@ -71,7 +71,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
             
             json_str = json.dumps(r)
             resp = json.loads(json_str)
-            
+
             if (resp.get('access_token') != None):
                 access_token = resp['access_token']
 
@@ -159,7 +159,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 for count in data['response']['items']:
                     test = QtWidgets.QTreeWidgetItem(self.treeWidget)
 
-                    test.setText(0, str(i+1))
+                    test.setText(0, str(i + 1))
                     test.setText(1, data['response']['items'][i]['artist'])
                     test.setText(2, data['response']['items'][i]['title'])
                     test.setText(3, utils.time_duration(data['response']['items'][i]['duration']))
@@ -174,6 +174,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     i += 1
 
                 self.label.setText(f"Всего аудиозаписей: {count_track}  Выбрано: {0}  Загружено: {0}")
+
             except Exception as e:
                 QMessageBox.critical(self, "F*CK", str(data))
 
@@ -223,12 +224,15 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     QMessageBox.information(self, "Информация",
                      "Ничего не выбрано.")
 
-            for item in downloads_list:
-                
+            for item in downloads_list:           
                 self.completed += 1
-                song_name = data['response']['items'][item-1]['artist'] + " - " + data['response']['items'][item-1]['title']
 
-                filename = PATH + "/"  + utils.remove_forbidden_characters(song_name) + ".mp3"
+                artist = data['response']['items'][item-1]['artist']
+                title = data['response']['items'][item-1]['title']
+
+                song_name = artist + " - " + title
+
+                filename = PATH + "/" + utils.remove_symbols(song_name) + ".mp3"
                 url = data['response']['items'][item-1]['url']
 
                 self.label_3.setText(f"Загружается: {song_name}")
@@ -246,6 +250,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     self.progressBar.setValue(self.completed)
 
             QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
+            self.label_3.setText("Загружается:")
                          
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(e))
@@ -266,9 +271,12 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         QMessageBox.about(
             self, "Помощь проекту",
             "<b>Дать разработчику на чай</b>" 
-            + "<br><br><b>QIWI: </b> <a href='https://qiwi.me/keyzt'>https://qiwi.me/keyzt </a>"
-            + "<br><b>Яндекс.Деньги:"
-            + "</b> <a href='https://money.yandex.ru/to/410017272872402'>410017272872402</a>"
+            + "<br><br><b>QIWI: </b> <a href="
+            + config.Qiwi
+            + ">" + config.Qiwi + "</a>"
+            + "<br><b>Яндекс.Деньги: "
+            + "</b> <a href="
+            + config.YandexMoney +">410017272872402</a>"
         )
 
 
@@ -284,7 +292,9 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
         if reply == QMessageBox.Yes:
             os.remove("DATA")
-            os.remove("response.json")
+
+            if (utils.check_file_path("response.json")):
+                os.remove("response.json")    
 
             self.auth_window = Auth()
             self.auth_window.show()
