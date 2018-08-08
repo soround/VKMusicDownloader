@@ -13,8 +13,7 @@ import wget
 
 
 def remove_symbols(filename):
-	filename = re.sub(r'[\/:;*?<>|«»",]', "", filename)
-	return filename
+	return re.sub(r'[\/:;*?<>|«»",]', "", filename)
 
 
 def check_file_path(path):
