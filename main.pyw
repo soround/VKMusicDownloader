@@ -155,7 +155,10 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 count_track = data['response']['count']
                 i = 0
 
-                #QtWidgets.QTreeWidget.clear()
+                # Небольшой костыль. За реализацию спасибо FailCur3
+                for count in data['response']['items']:
+                    QtWidgets.QTreeWidget.clear(self.treeWidget)
+
                 for count in data['response']['items']:
                     test = QtWidgets.QTreeWidgetItem(self.treeWidget)
 
@@ -176,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 self.label.setText(f"Всего аудиозаписей: {count_track}  Выбрано: {0}  Загружено: {0}")
 
             except Exception as e:
-                QMessageBox.critical(self, "F*CK", str(data))
+                QMessageBox.critical(self, "F*CK", str(e))
 
         except OSError as e:
             QMessageBox.critical(self, "F*CK", str(data))
