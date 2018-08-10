@@ -6,6 +6,7 @@ import sys
 import json
 import datetime
 import locale
+import requests
 import numpy as np
 
 import config
