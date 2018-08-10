@@ -12,7 +12,7 @@ HOST_API_PROXY ="https://vk-api-proxy.xtrafrancyz.net/"
 OAUTH_PROXY = "https://vk-oauth-proxy.xtrafrancyz.net/"
 
 # Версия API
-VK_API_VERSION = "5.83"
+VK_API_VERSION = "5.83" 
 
 #Время ожидания ответа
 TIME_OUT = 10
@@ -39,7 +39,8 @@ client_keys = [
 ]
 
 # https://oauth.vk.com/token?grant_type=password&client_id=&client_secret=&username=&password=&v=5.80&2fa_supported=1
-def autorization(login, password, client_id, client_secret, path):
+def autorization(login, password, client_id,
+ client_secret, captcha_sid, captcha_key, path):
   try:
     param = {
       'grant_type': 'password',
@@ -48,7 +49,9 @@ def autorization(login, password, client_id, client_secret, path):
       'username': login,
       'password': password,
       'v': VK_API_VERSION,
-      '2fa_supported': '1'
+      '2fa_supported': '1',
+      'captcha_sid' : captcha_sid,
+      'captcha_key' : captcha_key
     }
 
     return requests.get(f'{path}token', 
