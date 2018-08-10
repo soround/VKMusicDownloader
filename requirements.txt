@@ -3,8 +3,8 @@ lazy-object-proxy
 numpy
 pandas
 pylint
-PyQt5
-PyQt5-sip
+pyqt5
+pyqt5-sip
 pyqt5-tools
 python-dateutil
 pywin32
