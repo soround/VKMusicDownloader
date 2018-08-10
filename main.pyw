@@ -17,7 +17,7 @@ import tech_info
 import mainwindow
 
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, \
-     QMessageBox, QFileDialog
+     QMessageBox, QFileDialog, QInputDialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, Qt
@@ -45,7 +45,8 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         self.setWindowIcon(QIcon(config.IconPath))
         self.setWindowFlags(Qt.WindowCloseButtonHint |
                             Qt.WindowMinimizeButtonHint)
-        self.statusBar()
+        
+        self.statusBar().showMessage("2fa isn't supported")
         
         self.pushButton.clicked.connect(self.autorizations)
         self.pushButton.setShortcut("Return")
@@ -64,9 +65,12 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 path_api = vkapi.HOST_API
 
             self.statusBar().showMessage('Loading...')
+
             r = vkapi.autorization(login, password, 
-                vkapi.client_keys[0][0], vkapi.client_keys[0][1], path_oauth)
-            
+                vkapi.client_keys[0][0], vkapi.client_keys[0][1],
+                None, None, path_oauth)
+
+            self.statusBar().showMessage('Done!')
             # QMessageBox.about(self, "Message", str(r))
             
             json_str = json.dumps(r)
@@ -80,7 +84,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 getRefreshToken = vkapi.refreshToken(access_token, path_api)         
                 refresh_token = getRefreshToken["response"]["token"]
 
-                DATA = {'access_token': access_token, 'token': refresh_token}
+                DATA = {'access_token': access_token, 'token': refresh_token} 
                 utils.save_json("DATA", DATA)
 
                 #Запуск главного окна
@@ -91,7 +95,6 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
             else:
                 self.statusBar().showMessage('Login failed :(')
                 QMessageBox.critical(self, "F*CK", str(resp))
-                
 
         except Exception as e:
             self.statusBar().showMessage('Login failed :(')
@@ -113,6 +116,7 @@ class TechInfo(QWidget, tech_info.Ui_Form):
 
         self.pushButton_3.clicked.connect(self.exit)
         self.pushButton_3.setShortcut("Return")
+
 
     def exit(self):
         self.close()
@@ -155,9 +159,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 count_track = data['response']['count']
                 i = 0
 
-                # Небольшой костыль. За реализацию спасибо FailCur3
-                for count in data['response']['items']:
-                    QtWidgets.QTreeWidget.clear(self.treeWidget)
+                QtWidgets.QTreeWidget.clear(self.treeWidget)
 
                 for count in data['response']['items']:
                     test = QtWidgets.QTreeWidgetItem(self.treeWidget)
@@ -244,8 +246,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     + "  Загружено: "+ str(self.completed))
 
                 if (data['response']['items'][item-1]['url'] == ""):
-                    QMessageBox.warning(self, "Внимание", "Аудиозапись: " 
-                        + song_name + " недоступна в вашем регионе") 
+                    QMessageBox.warning(self, "Внимание", "Аудиозапись: " + song_name + " недоступна в вашем регионе") 
                 else:
                     QApplication.processEvents()
                     utils.downloads_files_in_wget(url, filename)
