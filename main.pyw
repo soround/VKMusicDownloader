@@ -270,9 +270,9 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             + config.ApplicationVersion
             + "<br><b>Стадия: </b> " 
             + config.ApplicationBranch
-            +"<br><br>Данное ПО распространяется по лицензии "
-            +"<a href="+ config.License+">MIT</a>, исходный код доступен"
-            +" на <a href="+ config.SourceСode+">GitHub</a>"
+            + "<br><br>Данное ПО распространяется по лицензии "
+            + "<a href="+ config.License+">MIT</a>, исходный код доступен"
+            + " на <a href="+ config.SourceСode+">GitHub</a>"
         )
 
 
