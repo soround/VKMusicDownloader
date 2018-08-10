@@ -179,7 +179,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
                     i += 1
 
-                self.label.setText(f"Всего аудиозаписей: {count_track}  Выбрано: {0}  Загружено: {0}")
+                self.label.setText("Всего аудиозаписей: " + str(count_track) 
+                    + " Выбрано: " + str(0) + " Загружено: " + str(0))
 
             except Exception as e:
                 QMessageBox.critical(self, "F*CK", str(data))
@@ -241,8 +242,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 filename = PATH + "/" + utils.remove_symbols(song_name) + ".mp3"
                 url = data['response']['items'][item-1]['url']
 
-                self.label_3.setText(f"Загружается: {song_name}")
-                self.label.setText(f"Всего аудиозаписей: " + str(count_track) 
+                self.label_3.setText("Загружается: " + song_name)
+                self.label.setText("Всего аудиозаписей: " + str(count_track) 
                     + "  Выбрано: " + str(np.size(downloads_list)) 
                     + "  Загружено: "+ str(self.completed))
 
@@ -264,7 +265,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     def AboutMessage(self):
         QMessageBox.about(
             self, "О программе",
-             "<b>" + config.ApplicationName 
+            "<b>" + config.ApplicationName 
             + "</b> - " + config.Description + "<br><br><b>Версия: </b>"
             + config.ApplicationVersion
             + "<br><b>Стадия: </b> " 
