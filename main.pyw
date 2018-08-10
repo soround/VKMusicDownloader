@@ -271,8 +271,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             + "<br><b>Стадия: </b> " 
             + config.ApplicationBranch
             + "<br><br>Данное ПО распространяется по лицензии "
-            + "<a href="+ config.License+">MIT</a>, исходный код доступен"
-            + " на <a href="+ config.SourceСode+">GitHub</a>"
+            + "<a href=" + config.License+">MIT</a>, исходный код доступен"
+            + " на <a href=" + config.SourceСode+">GitHub</a>"
         )
 
 
@@ -285,7 +285,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             + ">" + config.Qiwi + "</a>"
             + "<br><b>Яндекс.Деньги: "
             + "</b> <a href="
-            + config.YandexMoney +">410017272872402</a>"
+            + config.YandexMoney + ">410017272872402</a>"
         )
 
 
