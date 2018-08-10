@@ -17,7 +17,7 @@ import tech_info
 import mainwindow
 
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, \
-     QMessageBox, QFileDialog, QInputDialog
+    QMessageBox, QFileDialog, QInputDialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, Qt
@@ -70,13 +70,14 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 vkapi.client_keys[0][0], vkapi.client_keys[0][1],
                 None, None, path_oauth)
 
-            self.statusBar().showMessage('Done!')
             # QMessageBox.about(self, "Message", str(r))
             
             json_str = json.dumps(r)
             resp = json.loads(json_str)
 
             if (resp.get('access_token') != None):
+                
+                self.statusBar().showMessage('Done!')
                 access_token = resp['access_token']
 
                 self.statusBar().showMessage('Getting refresh_token')
