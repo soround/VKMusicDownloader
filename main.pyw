@@ -245,7 +245,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 self.label_3.setText("Загружается: " + song_name)
                 self.label.setText("Всего аудиозаписей: " + str(count_track) 
                     + "  Выбрано: " + str(np.size(downloads_list)) 
-                    + "  Загружено: "+ str(self.completed))
+                    + "  Загружено: " + str(self.completed))
 
                 if (data['response']['items'][item-1]['url'] == ""):
                     QMessageBox.warning(self, "Внимание", "Аудиозапись: " + song_name + " недоступна в вашем регионе") 
@@ -271,8 +271,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             + "<br><b>Стадия: </b> " 
             + config.ApplicationBranch
             + "<br><br>Данное ПО распространяется по лицензии "
-            + "<a href=" + config.License+">MIT</a>, исходный код доступен"
-            + " на <a href=" + config.SourceСode+">GitHub</a>"
+            + "<a href=" + config.License +">MIT</a>, исходный код доступен"
+            + " на <a href=" + config.SourceСode +">GitHub</a>"
         )
 
 
