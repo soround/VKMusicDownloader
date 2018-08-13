@@ -40,8 +40,7 @@ def internal_ip():
 
 def external_ip():
 	try:
-		external_ip = requests.get("https://ident.me/", timeout=5).content
-		return bytes(external_ip).decode("utf-8")
+		return bytes(requests.get("https://ident.me/", timeout=5).content).decode("utf-8")
 		
 	except Exception as e:
 		return None
