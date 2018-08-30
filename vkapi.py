@@ -12,7 +12,7 @@ HOST_API_PROXY ="https://vk-api-proxy.xtrafrancyz.net/"
 OAUTH_PROXY = "https://vk-oauth-proxy.xtrafrancyz.net/"
 
 # Версия API
-VK_API_VERSION = "5.83" 
+VK_API_VERSION = "5.87" 
 
 #Время ожидания ответа
 TIME_OUT = 10
@@ -21,7 +21,7 @@ TIME_OUT = 10
 HEADER = {'user-agent': 'VKAndroidApp/5.11.1-2316'}
 
 # Мне было день генерировать receipt. 
-# По хорошему его можно получить тут (android.clients.google.com/c2dm/register3)
+# По хорошему его можно получить тут(android.clients.google.com/c2dm/register3)
 receipt = "GF54PiFkdbb:APA91bEgyuoeagtS_1avbyY-_6UPRQ5fCJZwbv016qlNY-84iM81bfJgzIc28Tq_U7rvCqWb04nCOlj1M5A2yvZ793cnF8uZHhvKoGeHv9IzmR2ysSkKCn3aAff01IYFEv5nZFf02_hkVfszB2TRJ21XTNaUtvYO9A","TyQdnFs5xZ9:APA91bHzXMZxDmbDNegbUGDCWeB5KHo2TnpH6uaFRFCv_1ylko0umUOVP9tLZ-m5NuTeW6FlRJuRVXh4LzWg2Ki4LpKI9oaC5j1iMTJIJ4mdZ6GL6b0NCvvd0TTWwtf2u0OblTN5MbgNeLzdFdgX5P1Y0k_m1MdW8A","Z4k7n0LCsKL:APA91bGQH_Sz-wmgWJmAucpNeh7MQWgQ7hPe6HRi5hKU56cAlx8crzbiURoYW-1BMU0ncs7l5esX4B4MoJU2FQVwebKtYxb2Poz-hdgRr66ea2jcU8m08G3ADMyiV3cR3uTmGHfDZHry_3uQ8iitYG37c2hW6LYrSg"
 
 # client_id и client_secret приложений
@@ -133,3 +133,4 @@ def get_catalog(refresh_token, path):
 
   except Exception as e:
      return e
+     

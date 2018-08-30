@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ApplicationName = "VKMusicDownloader"
-ApplicationVersion = "1.1.1"
+ApplicationVersion = "1.1.3"
 ApplicationBranch = "Public Pre-Release"
 Description =  "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
