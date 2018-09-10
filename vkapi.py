@@ -12,7 +12,7 @@ HOST_API_PROXY ="https://vk-api-proxy.xtrafrancyz.net/"
 OAUTH_PROXY = "https://vk-oauth-proxy.xtrafrancyz.net/"
 
 # Версия API
-VK_API_VERSION = "5.87" 
+VK_API_VERSION = "5.89" 
 
 #Время ожидания ответа
 TIME_OUT = 10
@@ -133,4 +133,18 @@ def get_catalog(refresh_token, path):
 
   except Exception as e:
      return e
-     
+ 
+
+def get_playlist(refresh_token, path):
+  try:
+    param = {
+      'owner_id': '',  
+      'access_token':refresh_token,
+      'v': VK_API_VERSION
+    }
+
+    return requests.get(f'{path}method/audio.getPlaylists',
+      params=param, headers=HEADER, timeout=TIME_OUT).json()
+
+  except Exception as e:
+    return e

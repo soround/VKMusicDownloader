@@ -11,6 +11,8 @@ import requests
 import socket
 import wget
 
+import vkapi
+
 
 def remove_symbols(filename):
 	return re.sub(r'[\/:;*?<>|«»",]', "", filename)
@@ -25,9 +27,38 @@ def check_file_path(path):
 	return True
 
 
-def get_path(self, Object):
-	return Object.getExistingDirectory(
-		self, "Выберите папку для скачивания", "", Object.ShowDirsOnly)
+def get_path(self, flags, Object):
+	if flags:
+		path = Object.getExistingDirectory(
+			self, "Выберите папку для скачивания", "", Object.ShowDirsOnly)
+		
+		if path == "":
+			return os.getcwd()
+		else:
+			return path	 
+	else:
+		return os.getcwd()
+
+
+def get_file_size(file):
+	if check_file_path(file):
+		return os.path.getsize(file)
+	else:
+		return None
+
+
+def get_host_api(flags):
+	if flags:
+		return vkapi.HOST_API_PROXY
+	else:
+		return vkapi.HOST_API
+
+
+def get_host_oauth(flags):
+	if flags:
+		return  vkapi.OAUTH_PROXY
+	else:
+		return  vkapi.OAUTH
 
 
 def check_connection(url):
@@ -35,10 +66,10 @@ def check_connection(url):
 		requests.get(url, timeout=5)
 	except Exception as e:
 		return False
-		
+
 	return True
-	
-	
+
+
 def get_internal_ip():
 	return socket.gethostbyname(socket.getfqdn())
 
@@ -47,7 +78,7 @@ def get_external_ip():
 	try:
 		return bytes(requests.get("http://ident.me/", timeout=5).content
 			).decode("utf-8")
-		
+
 	except Exception as e:
 		return None
 
@@ -68,26 +99,21 @@ def time_duration(time):
 def save_json(filename, data):
     with open(filename, 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=2, ensure_ascii=False)
-            
 
-def downloads_files_in_wget(url, filename):
-	wget.download(url, filename)
+
+def downloads_files_in_wget(url, filename, progress):
+	wget.download(url, filename, bar=progress)
 
 
 def get_size_content(url):
 	try:
 		return requests.head(url, timeout=5).headers['content-length']
 	except 	Exception as e:
-		return 0 
+		return 0
 
 
-def downloads_files(url, filename):
-	data = requests.get(url, stream=True)
-	size = 0
-	with open(filename, 'wb') as f:
-		for chunk in data.iter_content(chunk_size=1024):
-			if chunk:
-				f.write(chunk)
-				size += 1024
-
-	return filename
+def convert_to_mb(size):
+	if size == None:
+		return None
+	else:
+		return round(size /1024 / 1024, 2)

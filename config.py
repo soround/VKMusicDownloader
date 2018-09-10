@@ -8,6 +8,7 @@ Description =  "Кроссплатформенный клиент для мас�
 
 IconPath = "assets/icon/vk_downloader_icon.png"
 IconPathV2 = "assets/icon/downloader_icon.png"
+IconPathV3 = "assets/icon/downloader.png"
 
 License = "https://github.com/keyzt/VKMusicDownloader/blob/master/LICENSE"
 SourceСode = "https://github.com/keyzt/VKMusicDownloader"
