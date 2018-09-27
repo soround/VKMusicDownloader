@@ -56,9 +56,9 @@ def get_host_api(flags):
 
 def get_host_oauth(flags):
 	if flags:
-		return  vkapi.OAUTH_PROXY
+		return vkapi.OAUTH_PROXY
 	else:
-		return  vkapi.OAUTH
+		return vkapi.OAUTH
 
 
 def check_connection(url):
@@ -71,7 +71,10 @@ def check_connection(url):
 
 
 def get_internal_ip():
-	return socket.gethostbyname(socket.getfqdn())
+	try:
+		return socket.gethostbyname(socket.getfqdn())
+	except Exception as e:
+		return None
 
 
 def get_external_ip():
@@ -110,10 +113,3 @@ def get_size_content(url):
 		return requests.head(url, timeout=5).headers['content-length']
 	except 	Exception as e:
 		return 0
-
-
-def convert_to_mb(size):
-	if size == None:
-		return None
-	else:
-		return round(size /1024 / 1024, 2)

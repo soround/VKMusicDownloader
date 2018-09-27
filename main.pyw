@@ -126,7 +126,7 @@ class TechInfo(QWidget, tech_info.Ui_Form):
         self.th.oauth.connect(self.label_6.setText)
 
         self.th.start()
-
+ 
 
     @pyqtSlot(str)
     def set_internal_ip(self, ip):
@@ -164,7 +164,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.action_2.triggered.connect(self.Logout)
         self.action_3.triggered.connect(self.Donate)
         self.action_4.triggered.connect(self.TechInformation)
-        #self.progressBar.setFormat("%{.2f}%".format('p'))
         self.progressBar.setFormat("%p%")
         self.action_4.setShortcut("Ctrl+T")
 
@@ -249,6 +248,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.th.loading_audio.connect(self.loading_audio)
             self.th.message.connect(self.label.setText)
             self.th.unavailable_audio.connect(self.unavailable_audio)
+            self.th.content_restricted.connect(self.content_restricted)
             self.th.finished.connect(self.finished_loader)
             self.th.start()
 
@@ -270,6 +270,11 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     def unavailable_audio(self, song_name):
         QMessageBox.warning(self, "Внимание",
          "Аудиозапись: " + song_name + " недоступна в вашем регионе")
+
+    @pyqtSlot(str)
+    def content_restricted(self, song_name):
+        QMessageBox.warning(self, "Внимание",
+         "Доступ к аудиозаписи: " + song_name + " скоро будет открыт")
 
     @pyqtSlot(int)
     def progress(self, range):
@@ -339,6 +344,7 @@ class Downloads_file(QThread):
     loading_audio = pyqtSignal(str)
     message = pyqtSignal(str)
     unavailable_audio = pyqtSignal(str)
+    content_restricted = pyqtSignal(str)
 
     def __init__(self, downloads_list, PATH):
         super().__init__()
@@ -361,7 +367,6 @@ class Downloads_file(QThread):
             count_track = data['response']['count']
             selected = np.size(self.downloads_list)
 
-
             for item in self.downloads_list:
                 self.completed += 1
                 
@@ -380,7 +385,10 @@ class Downloads_file(QThread):
                 #self.progress_range.emit(total)
 
                 if (data['response']['items'][item-1]['url'] == ""):
-                    self.unavailable_audio.emit(song_name)
+                    if (data['response']['items'][item-1]['content_restricted'] == 5):
+                        self.content_restricted.emit(song_name)
+                    else:
+                        self.unavailable_audio.emit(song_name)
 
                 else:
                     self.message.emit(msg)
@@ -394,7 +402,7 @@ class Downloads_file(QThread):
         except Exception as e:
             pass
 
-
+    # Magic. Do not touch.
     def update_progress(self, current, total, width=80):
         self.progress_range.emit(total)
         self.progress.emit(current)
