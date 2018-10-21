@@ -6,7 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -56,4 +56,3 @@ class Ui_Form(object):
         self.label_5.setText(_translate("Form", "Хост:"))
         self.label_6.setText(_translate("Form", "Хост:"))
         self.pushButton_3.setText(_translate("Form", "OK"))
-

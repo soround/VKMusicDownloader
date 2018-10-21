@@ -68,4 +68,3 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Войти"))
         self.menu.setTitle(_translate("MainWindow", "Настройки"))
         self.action.setText(_translate("MainWindow", "Использовать прокси"))
-

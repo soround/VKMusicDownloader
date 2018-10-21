@@ -5,7 +5,6 @@ import os
 import sys
 import json
 import locale
-import numpy as np
 
 import config
 import utils
@@ -15,25 +14,13 @@ from ui import auth
 from ui import tech_info
 from ui import mainwindow
 
-
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, \
-    QMessageBox, QFileDialog, QInputDialog, QStyleFactory
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QMessageBox, QFileDialog, QInputDialog, QStyleFactory
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot, QThread, Qt, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, QThread, QObject, Qt, pyqtSignal
 
 
 locale.setlocale(locale.LC_ALL, "")
-
-# Главное окно приложения
-window = None
-# Техническая информация(окно)
-tech_info_window = None
-# Окно авторизации
-auth_window = None
-
-# стиль окна
-sys.argv += ['--style', 'fusion']
 
 
 # Окно авторизации
@@ -45,7 +32,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         self.setWindowIcon(QIcon(config.IconPath))
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
 
-        self.statusBar().showMessage("2fa isn't supported")
+        self.statusBar().showMessage("2fa is supported :)")
 
         self.pushButton.clicked.connect(self.autorizations)
         self.pushButton.setShortcut("Return")
@@ -53,22 +40,28 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
     def autorizations(self):
         try:
+            
             login = self.lineEdit.text()
             password = self.lineEdit_2.text()
 
-            path_api = utils.get_host_api(self.action.isChecked())
-            path_oauth = utils.get_host_oauth(self.action.isChecked())
+            isProxyOauth = utils.get_proxy_host(self.action.isChecked(), False)
+            isProxyAPI = self.action.isChecked()
 
             self.statusBar().showMessage('Loading...')
 
-            r = vkapi.autorization(login, password,
-                vkapi.client_keys[0][0], vkapi.client_keys[0][1],
-                None, None, path_oauth)
+            r = vkapi.autorization(login, password, isProxyOauth)
 
             # QMessageBox.about(self, "Message", str(r))
 
-            json_str = json.dumps(r)
-            resp = json.loads(json_str)
+            if (r =="Error: 2fa isn't supported"):
+                code, ok = QInputDialog.getText(self, "Код потверждения", "Введите код из СМС")
+
+                if ok:
+                    r = vkapi.autorization(login, password, isProxyOauth, str(code))
+                else:
+                    r = vkapi.autorization(login, password, isProxyOauth, "")
+
+            resp = json.loads(json.dumps(r))
 
             if (resp.get('access_token') != None):
 
@@ -77,7 +70,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
                 self.statusBar().showMessage('Getting refresh_token')
 
-                getRefreshToken = vkapi.refreshToken(access_token, path_api)
+                getRefreshToken = vkapi.refreshToken(access_token, isProxyAPI)
                 refresh_token = getRefreshToken["response"]["token"]
 
                 DATA = {'access_token': access_token, 'token': refresh_token}
@@ -91,13 +84,13 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
             else:
                 self.statusBar().showMessage('Login failed :(')
                 QMessageBox.critical(self, "F*CK", str(resp))
+        
+        except vkapi.VKException as ex:
+            QMessageBox.critical(self, "F*CK VK", str(ex))
 
         except Exception as e:
             self.statusBar().showMessage('Login failed :(')
-            QMessageBox.critical(self, "F*CK", str(r))
-            #self.window = MainWindow()
-            #self.hide()
-            #self.window.show()
+            QMessageBox.critical(self, "F*CK", str(e))
 
 
 # Техническая информация
@@ -134,147 +127,203 @@ class TechInfo(QWidget, tech_info.Ui_Form):
 
     @pyqtSlot(str)
     def set_external_ip(self, ip):
-        self.label_2.setText("Внешний IP: " + ip)
+        self.label_2.setText("Внешний IP: " + (ip or "Недоступно"))
 
     @pyqtSlot(str)
     def set_hostname(self, hostname):
-        self.label_4.setText("Hostname: " + hostname)
-
+        self.label_4.setText("Hostname: " + (hostname or "Недоступно"))
+        
     @pyqtSlot(str)
     def set_location(self, location):
-        self.label_3.setText("Location: " + location)
+        self.label_3.setText("Location: " + (location or "Недоступно"))
 
 
     def exit(self): self.close()
 
 
 # Главное окно приложения         
-class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
-
+class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
+    
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
         self.setWindowFlags(QtCore.Qt.Window)
-
+        
         self.pushButton_2.clicked.connect(self.LoadsListMusic)
         self.pushButton.clicked.connect(self.Downloads)
+        self.pushButton.setCheckable(True)
         self.action.triggered.connect(self.AboutMessage)
         self.action_2.setShortcut("Ctrl+Q")
         self.action_2.triggered.connect(self.Logout)
-        self.action_3.triggered.connect(self.Donate)
         self.action_4.triggered.connect(self.TechInformation)
-        self.progressBar.setFormat("%p%")
+        self.progressBar.setFormat("%p% (%v/%m)")
         self.action_4.setShortcut("Ctrl+T")
+
+        self.th = None
+        self.is_loaded = False
+        self.data = None
+        self.getSelected = []
+        self.downloads_list = []
+        self.PATH = ""
 
 
     def LoadsListMusic(self):
         try:
+            self.pushButton.setEnabled(True)
+            
             with open('DATA', encoding='utf-8') as data_json:
                 data_token = json.loads(data_json.read())
 
-            access_token = data_token["access_token"]
+            
             refresh_token = data_token["token"]
+            
+            isProxyAPI = self.action_5.isChecked()
+            
+            self.data = vkapi.get_audio(refresh_token, isProxyAPI)
 
-            try:
-                path_api = utils.get_host_api(self.action_5.isChecked())
-                path_oauth = utils.get_host_oauth(self.action_5.isChecked())
+            if(config.SaveToFile):
+                utils.save_json('response.json', self.data)
 
-                data = vkapi.get_audio(refresh_token, path_api)
-                utils.save_json('response.json', data)
+            count_track = self.data['response']['count']
+            i = 0
 
-                count_track = data['response']['count']
-                i = 0
+            QtWidgets.QTreeWidget.clear(self.treeWidget)
 
-                QtWidgets.QTreeWidget.clear(self.treeWidget)
+            for count in self.data['response']['items']:
 
-                for count in data['response']['items']:
+                test = QtWidgets.QTreeWidgetItem(self.treeWidget)
 
-                    test = QtWidgets.QTreeWidgetItem(self.treeWidget)
+                test.setText(0, str(i + 1))
+                test.setText(1, count['artist'])
+                test.setText(2, count['title'])
+                test.setText(3, utils.time_duration(count['duration']))
+                test.setText(4, utils.unix_time_stamp_convert(count['date']))
 
-                    test.setText(0, str(i + 1))
-                    test.setText(1, data['response']['items'][i]['artist'])
-                    test.setText(2, data['response']['items'][i]['title'])
-                    test.setText(3, utils.time_duration(data['response']['items'][i]['duration']))
-                    test.setText(4, utils.unix_time_stamp_convert(data['response']['items'][i]['date']))
+                if (count.get('is_hq')):
+                    if (count.get('is_explicit')):
+                        test.setText(5, "HQ (E)")
+                    else:
+                        test.setText(5, "HQ")
 
-                    if (data['response']['items'][i]['is_hq']):
-                        if (data['response']['items'][i]['is_explicit']):
-                            test.setText(5, "HQ (E)")
-                        else:
-                            test.setText(5, "HQ")
-
-                    if (data['response']['items'][i]['url'] == ""):
-                        test.setText(6, "Недоступно")
-
-                    i += 1
-
-                self.label.setText("Всего аудиозаписей: " + str(count_track)
-                    + " Выбрано: " + str(0) + " Загружено: " + str(0))
-
-            except Exception as e:
-                QMessageBox.critical(self, "F*CK", str(data))
-
-        except OSError as e:
-            QMessageBox.critical(self, "F*CK", str(e))
+                else:
+                    if count.get('is_explicit'):
+                        test.setText(5, "E")
 
 
-    def Downloads(self):
-        try:  
-            PATH = utils.get_path(self, self.action_7.isChecked(), QFileDialog)
-            self.label_2.setText("Путь для скачивания: " + PATH)
+                if not (count.get('url', False)):
+                    test.setText(6, "Недоступно")
 
-            self.completed = 0
-            downloads_list = []
-            getSelected = self.treeWidget.selectedItems()
+                i += 1
 
-            for i in getSelected:
-                downloads_list.append(int(i.text(0)))
+            self.label.setText("Всего аудиозаписей: " + str(count_track) + " Выбрано: " + str(0) + " Загружено: " + str(0))
+            self.is_loaded = True
 
-            with open('response.json', encoding='utf-8') as data_json:
-                data = json.loads(data_json.read())
-
-            count_track = data['response']['count']
-
-            #QApplication.processEvents()
-
-            if (np.size(downloads_list) == 0):
-                    QMessageBox.information(self, "Информация",
-                     "Ничего не выбрано.")
-
-            self.th = Downloads_file(downloads_list, PATH)
-            self.th.progress_range.connect(self.progress)
-            self.th.progress.connect(self.progressBar.setValue)
-            self.th.loading_audio.connect(self.loading_audio)
-            self.th.message.connect(self.label.setText)
-            self.th.unavailable_audio.connect(self.unavailable_audio)
-            self.th.content_restricted.connect(self.content_restricted)
-            self.th.finished.connect(self.finished_loader)
-            self.th.start()
-
-            #self.label_3.setText("Загружается:3")
+        except vkapi.VKException as ex:
+            QMessageBox.critical(self, "F*CK VK", str(ex))
 
         except Exception as e:
             QMessageBox.critical(self, "F*CK", str(e))
 
 
+    def Downloads(self, started):
+        try:
+            if self.is_loaded != True:
+                self.pushButton.setChecked(False)
+                raise Exception("Вы не загрузили список аудиозаписей")
+
+            if started:
+
+                self.PATH = utils.get_path(self, self.action_7.isChecked(), QFileDialog)
+                self.label_2.setText("Путь для скачивания: " + self.PATH)
+
+                self.completed = 0
+                self.getSelected = self.treeWidget.selectedItems()
+
+                for i in self.getSelected:
+                    self.downloads_list.append(int(i.text(0)))
+
+                if (config.SaveToFile):
+                    if (utils.file_exists('response.json')):
+                        with open('response.json', encoding='utf-8') as data_json:
+                            self.data = json.loads(data_json.read())
+                    else:
+                        raise Exception("File \"response.json\" not found")
+
+                if (self.downloads_list.__len__() == 0):
+                    QMessageBox.information(self, "Информация", "Ничего не выбрано.")
+
+                self.pushButton.setText("Остановить")
+                
+                if(config.SaveToFile):
+                    self.th = Downloads_file(self.PATH, self.downloads_list)
+                else:
+                    self.th = Downloads_file(self.PATH, self.downloads_list, self.data)
+
+                self.th.progress_range.connect(self.progress)
+                self.th.progress.connect(self.progressBar.setValue)
+                self.th.loading_audio.connect(self.loading_audio)
+                self.th.message.connect(self.label.setText)
+                self.th.unavailable_audio.connect(self.unavailable_audio)
+                self.th.content_restricted.connect(self.content_restricted)
+                self.th.finished.connect(self.finished_loader)
+                self.th.abort_download.connect(self.aborted_download)
+                self.th.start()
+
+            else:
+                self.th.terminate()
+                self.set_ui_default()
+                QMessageBox.information(self, "Информация", "Загрузка остановлена.")
+                del self.th
+
+        except Exception as e:
+            QMessageBox.critical(self, "F*CK", str(e))
+            self.pushButton.setText("Скачать")
+
+
+    def set_ui_default(self):
+        self.getSelected = []
+        self.downloads_list = []
+        self.pushButton.setText("Скачать")
+        self.pushButton.setChecked(False)
+        self.progressBar.setValue(0)
+        self.progressBar.setRange(0, 100)
+        self.label_3.setText("Загружается: ")
+        self.label.setText("Всего аудиозаписей: " + str(self.data['response']['count']) + " Выбрано: " + str(0) + " Загружено: " + str(0))
+
+
     @pyqtSlot()
     def finished_loader(self):
         QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
+        self.set_ui_default()
+
+    @pyqtSlot(str)
+    def aborted_download(self, err_msg):
+        QMessageBox.critical(self, "F*CK", "Загрузка прервана. Причина: " + err_msg)
+        self.set_ui_default()
 
     @pyqtSlot(str)
     def loading_audio(self, song_name):
-        self.label_3.setText("Загружается: " + song_name)
+        if len(song_name) > 115:
+            self.label_3.setText("Загружается: " + song_name[0:115])
+        else:
+            self.label_3.setText("Загружается: " + song_name)
 
     @pyqtSlot(str)
     def unavailable_audio(self, song_name):
         QMessageBox.warning(self, "Внимание",
          "Аудиозапись: " + song_name + " недоступна в вашем регионе")
 
-    @pyqtSlot(str)
-    def content_restricted(self, song_name):
-        QMessageBox.warning(self, "Внимание",
-         "Доступ к аудиозаписи: " + song_name + " скоро будет открыт")
+    @pyqtSlot(int, str)
+    def content_restricted(self, id_restrict,  song_name):
+        if id_restrict == 1:
+            message = "Аудиозапись: " + song_name + " недоступна по решению правообладателя"
+        elif id_restrict == 2:
+            message = "Аудиозапись: " + song_name + " недоступна в вашем регионе по решению правообладателя"
+        elif id_restrict == 5:
+            message = "Доступ к аудиозаписи: " + song_name + " скоро будет открыт"
+        
+        QMessageBox.warning(self, "Внимание", message)
 
     @pyqtSlot(int)
     def progress(self, range):
@@ -295,38 +344,27 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         )
 
 
-    def Donate(self):
-        QMessageBox.about(
-            self, "Помощь проекту",
-            "<b>Дать разработчику на чай</b>"
-            + "<br><br><b>QIWI: </b> <a href="
-            + config.Qiwi
-            + ">" + config.Qiwi + "</a>"
-            + "<br><b>Яндекс.Деньги: "
-            + "</b> <a href="
-            + config.YandexMoney + ">410017272872402</a>"
-        )
-
-
     def TechInformation(self):
-        path_api = utils.get_host_api(self.action_5.isChecked())
-        path_oauth = utils.get_host_oauth(self.action_5.isChecked())
+        if (self.action_5.isChecked()):
+            path_api = 'https://' + vkapi.HOST_API_PROXY
+            path_oauth = 'https://' + vkapi.HOST_OAUTH_PROXY
+        else:
+            path_api = 'https://' + vkapi.HOST_API
+            path_oauth = 'https://' + vkapi.HOST_OAUTH
         
         self.tech_info_window = TechInfo(path_api, path_oauth)
 
 
     def Logout(self):
-        reply = QMessageBox.question(self, "Выход из аккаунта",
-         "Вы точно хотите выйти из аккаунта?",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        reply = QMessageBox.question(self, "Выход из аккаунта","Вы точно хотите выйти из аккаунта?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            if (utils.check_file_path("DATA")):
+            if (utils.file_exists("DATA")):
                 os.remove("DATA")
             else:
                 print("WTF?")
 
-            if (utils.check_file_path("response.json")):
+            if (utils.file_exists("response.json")):
                 os.remove("response.json")
 
             self.auth_window = Auth()
@@ -339,54 +377,53 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 class Downloads_file(QThread):
 
     finished = pyqtSignal()
+    abort_download = pyqtSignal(str)
     progress_range = pyqtSignal(int)
     progress = pyqtSignal(int)
     loading_audio = pyqtSignal(str)
     message = pyqtSignal(str)
     unavailable_audio = pyqtSignal(str)
-    content_restricted = pyqtSignal(str)
+    content_restricted = pyqtSignal(int, str)
 
-    def __init__(self, downloads_list, PATH):
+    def __init__(self, PATH, downloads_list=None, data=None):
         super().__init__()
         self.downloads_list = downloads_list
+        self.data = data
         self.PATH = PATH
-
-
-    def __del__(self):
-        #print(".... end thread.....")
-        self.wait()
 
 
     def run(self):
         try:
-            with open('response.json', encoding='utf-8') as data_json:
-                data = json.loads(data_json.read())
+            if(config.SaveToFile):
+                if (utils.file_exists('response.json')):
+                    with open('response.json', encoding='utf-8') as data_json:
+                        self.data = json.loads(data_json.read())
+                else:
+                    raise Exception("File \"response.json\" not found")
 
             self.completed = 0
 
-            count_track = data['response']['count']
-            selected = np.size(self.downloads_list)
+            count_track = self.data['response']['count']
+            selected = self.downloads_list.__len__()
 
             for item in self.downloads_list:
-                self.completed += 1
                 
-                artist = data['response']['items'][item-1]['artist']
-                title = data['response']['items'][item-1]['title']
+                artist = self.data['response']['items'][item-1]['artist']
+                title = self.data['response']['items'][item-1]['title']
 
-                msg = "Всего аудиозаписей: " + str(count_track) + " Выбрано: "\
-                 + str(selected) + " Загружено: " + str(self.completed)
+                msg = "Всего аудиозаписей: " + str(count_track) + " Выбрано: " + str(selected) + " Загружено: " + str(self.completed)
 
                 song_name = artist + " - " + title
 
-                filename = self.PATH + "/" + utils.remove_symbols(song_name) + ".mp3"
-                url = data['response']['items'][item-1]['url']
+                filename = self.PATH + "/" + utils.fix_file_name(song_name) + ".mp3"
+                url = self.data['response']['items'][item-1]['url']
 
-                #total = int(utils.get_size_content(url))
-                #self.progress_range.emit(total)
 
-                if (data['response']['items'][item-1]['url'] == ""):
-                    if (data['response']['items'][item-1]['content_restricted'] == 5):
-                        self.content_restricted.emit(song_name)
+                if (self.data['response']['items'][item-1]['url'] == ""):
+                    
+                    if (self.data['response']['items'][item-1]['content_restricted']):
+                        self.content_restricted.emit(int(self.data['response']['items'][item-1]['content_restricted']), song_name)
+
                     else:
                         self.unavailable_audio.emit(song_name)
 
@@ -395,12 +432,13 @@ class Downloads_file(QThread):
                     self.loading_audio.emit(song_name)
                     utils.downloads_files_in_wget(url, filename, self.update_progress)
                     #utils.downloads_files(url, filename, self.progress)
+                    self.completed += 1
 
             self.finished.emit()
             self.loading_audio.emit('')
 
         except Exception as e:
-            pass
+            self.abort_download.emit(str(e))
 
     # Magic. Do not touch.
     def update_progress(self, current, total, width=80):
@@ -431,10 +469,10 @@ class NetworkInfo(QThread):
             loc = data['country'] + ", " + data['region'] + ", " + data['city']
 
             self.external_ip.emit(data['ip'])
-            self.hostname.emit(data['hostname'])
+            if 'hostname' in data: self.hostname.emit(data['hostname'])
             self.location.emit(loc)
 
-        except:
+        except Exception:
             self.internal_ip.emit(utils.get_internal_ip())
             self.external_ip.emit(None)
             self.hostname.emit(None)
@@ -457,16 +495,23 @@ class NetworkInfo(QThread):
 
     def __del__(self):
         print("Never Say Goodbye")
-        self.wait()
+        # self.wait()
 
 
 def start():
     try:
-        sys.dont_write_bytecode = True
+        if "--version" in sys.argv:
+            sys.exit(config.ApplicationName + " " +config.ApplicationVersion + " " + config.ApplicationBranch)
+        
         path = "DATA"
+        
         app = QApplication(sys.argv)
+        app.setWindowIcon(QIcon(config.IconPath))
+        app.setApplicationName(config.ApplicationName)
+        app.setApplicationVersion(config.ApplicationVersion)
+        app.setStyle('Fusion')
 
-        if (utils.check_file_path(path)):
+        if (utils.file_exists(path)):
             ex = MainWindow()
             ex.show()
             sys.exit(app.exec_())
@@ -476,7 +521,8 @@ def start():
             sys.exit(app.exec_())
 
     except Exception as e:
-        sys.exit(app.exec_())
+        print("F*CK: " + str(e))
+        exit()
 
 
 if __name__ == '__main__':

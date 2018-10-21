@@ -15,6 +15,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(710, 495)
+
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -63,6 +64,7 @@ class Ui_MainWindow(object):
         self.treeWidget.setAllColumnsShowFocus(True)
         self.treeWidget.setColumnCount(7)
         self.treeWidget.setObjectName("treeWidget")
+        
         self.treeWidget.header().setDefaultSectionSize(119)
         self.treeWidget.header().setHighlightSections(True)
         self.treeWidget.header().setSortIndicatorShown(False)
@@ -72,6 +74,7 @@ class Ui_MainWindow(object):
         self.treeWidget.header().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
         self.treeWidget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeToContents)
         self.treeWidget.header().setSectionResizeMode(6, QtWidgets.QHeaderView.ResizeToContents)
+
 
         self.verticalLayout_3.addWidget(self.treeWidget)
         self.pushButton_2 = QtWidgets.QPushButton(self.frame)
@@ -89,6 +92,7 @@ class Ui_MainWindow(object):
         self.label_3 = QtWidgets.QLabel(self.frame_2)
         self.label_3.setObjectName("label_3")
         self.verticalLayout_4.addWidget(self.label_3)
+
         self.verticalLayout_3.addWidget(self.frame_2)
         self.frame_3 = QtWidgets.QFrame(self.frame)
         self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -121,16 +125,14 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
 
         MainWindow.setCentralWidget(self.centralwidget)
+        
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 708, 21))
         self.menubar.setObjectName("menubar")
-
         self.menu = QtWidgets.QMenu(self.menubar)
         self.menu.setObjectName("menu")
-
         self.menu_2 = QtWidgets.QMenu(self.menubar)
         self.menu_2.setObjectName("menu_2")
-
         self.menu_3 = QtWidgets.QMenu(self.menubar)
         self.menu_3.setObjectName("menu_3")
         MainWindow.setMenuBar(self.menubar)
@@ -141,8 +143,8 @@ class Ui_MainWindow(object):
         self.action_2 = QtWidgets.QAction(MainWindow)
         self.action_2.setObjectName("action_2")
         
-        self.action_3 = QtWidgets.QAction(MainWindow)
-        self.action_3.setObjectName("action_3")
+        # self.action_3 = QtWidgets.QAction(MainWindow)
+        # self.action_3.setObjectName("action_3")
 
         self.action_4 = QtWidgets.QAction(MainWindow)
         self.action_4.setObjectName("action_4")
@@ -157,14 +159,11 @@ class Ui_MainWindow(object):
 
         self.menu.addAction(self.action_2)
         self.menu_2.addAction(self.action_4)
-        self.menu_2.addAction(self.action_3)
+        # self.menu_2.addAction(self.action_3)
         self.menu_2.addAction(self.action)
 
 
-        self.menu_3.addAction(self.action_5)
         self.menu_3.addAction(self.action_7)
-
-
         self.menu_3.addAction(self.action_5)
 
         self.menubar.addAction(self.menu.menuAction())
@@ -177,7 +176,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", config.ApplicationName + " " + config.ApplicationVersion + " " + config.ApplicationBranch))
-        #MainWindow.setWindowFlags(Qt.WindowMaximazeButtonHint)
 
         self.treeWidget.setSortingEnabled(False)
         self.treeWidget.headerItem().setText(0, _translate("MainWindow", "Номер"))
@@ -187,19 +185,24 @@ class Ui_MainWindow(object):
         self.treeWidget.headerItem().setText(4, _translate("MainWindow", "Дата добавления"))
         self.treeWidget.headerItem().setText(5, _translate("MainWindow", "Tags"))
         self.treeWidget.headerItem().setText(6, _translate("MainWindow", "Доступность"))
+        
         self.pushButton_2.setText(_translate("MainWindow", "Загрузить список аудиозаписей"))
+        
         self.label.setText(_translate("MainWindow", "Всего аудиозаписей: Выбрано: Загружено:"))
         self.label_3.setText(_translate("MainWindow", "Загружается: "))
         self.label_2.setText(_translate("MainWindow", "Путь для скачивания: " + os.getcwd()))
+        
         self.progressBar.setFormat(_translate("MainWindow", ""))
+        
         self.pushButton.setText(_translate("MainWindow", "Скачать"))
+        
         self.menu.setTitle(_translate("MainWindow", "Аккаунт"))
         self.menu_2.setTitle(_translate("MainWindow", "Помощь"))
         self.menu_3.setTitle(_translate("MainWindow", "Настройки"))
+        
         self.action.setText(_translate("MainWindow", "О программе"))
         self.action_2.setText(_translate("MainWindow", "Выйти из аккаунта"))
-        self.action_3.setText(_translate("MainWindow", "Помощь проекту"))
+        # self.action_3.setText(_translate("MainWindow", "Помощь проекту"))
         self.action_4.setText(_translate("MainWindow", "Техническая информация"))
         self.action_5.setText(_translate("MainWindow", "Включить прокси"))
         self.action_7.setText(_translate("MainWindow", "Выбрать папку для скачивания"))
-
