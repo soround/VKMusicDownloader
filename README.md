@@ -1,13 +1,14 @@
-# VKMusicDownloader
+<p align="center">
+  <img src="assets/icon/vk_downloader_icon.png" width="150" />
+  <h3 align="center">VKMusicDownloader</h3>
+  <p align="center">Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте.</p>
+</p>
 
-[![GitHub license](https://img.shields.io/github/license/keyzt/VKMusicDownloader.svg)](https://github.com/keyzt/VKMusicDownloader/blob/master/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/keyzt/VKMusicDownloader.svg)](https://github.com/keyzt/VKMusicDownloader/issues)
-[![image](https://img.shields.io/github/contributors/keyzt/VKMusicDownloader.svg)](https://github.com/keyzt/VKMusicDownloader/graphs/contributors)
-
-Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте.
+# **Использование**
+ Актуальная версия доступна [здесь](https://github.com/keyzt/VKMusicDownloader/releases)
 
 # **Установка**
-
+ 
  1.  Установить [python 3.5](https://www.python.org/) и выше 
  2.  [Скачать проект](https://github.com/keyzt/VKMusicDownloader/archive/master.zip)
  3.  Перейти в папку с проектом `cd VKMusicDownloader`
