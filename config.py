@@ -3,7 +3,7 @@
 
 ApplicationName = "VKMusicDownloader"
 ApplicationVersion = "1.1.7"
-ApplicationBranch = "Public Pre-Release"
+ApplicationBranch = "Public Release"
 Description =  "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
 IconPath = "assets/icon/vk_downloader_icon.ico"
