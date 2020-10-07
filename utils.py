@@ -92,9 +92,11 @@ def downloads_files_in_wget(url, filename, progress):
 def get_user_agent(usage_application_name):
     if usage_application_name:
         return {
-            'user-agent': 'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; '+ ApplicationName + ' ' + ApplicationVersion +'; ru; 1920x1080)'
+            'user-agent': 'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; '+ ApplicationName + ' ' + ApplicationVersion +'; ru; 1920x1080)',
+            'x-vk-android-client': 'new'
         }
     else:
         return {
-            'user-agent': 'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; Unknown; ru; 1920x1080)'
+            'user-agent': 'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; Unknown; ru; 1920x1080)',
+            'x-vk-android-client': 'new'
         }

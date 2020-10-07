@@ -299,6 +299,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
             self.data = [Audio(item) for item in self.api_data['items']]
 
             if not (config.NoSaveToFile): utils.save_json('response.json', self.api_data)
+            del self.api_data
             
             QtWidgets.QTreeWidget.clear(self.treeWidget)
             
