@@ -1,184 +1,204 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 import requests
+from utils import get_user_agent
 
 
-# Домен API, OAuth
-HOST_API = 'api.vk.com'
-HOST_OAUTH = 'oauth.vk.com'
+host = "api.vk.me"
+host_oauth = "oauth.vk.com"
+proxyHost = "vk-api-proxy.xtrafrancyz.net"
+proxyOauthHost = "vk-oauth-proxy.xtrafrancyz.net"
+apiVersion = "5.89"
+userAgent = get_user_agent(True)
 
-# Прокси
-HOST_API_PROXY ="vk-api-proxy.xtrafrancyz.net"
-HOST_OAUTH_PROXY = "vk-oauth-proxy.xtrafrancyz.net"
-
-# Базовый URL
-BASE_API_URL = "https://{0}/method/".format(HOST_API)
-BASE_OAUTH_URL = "https://{0}/".format(HOST_OAUTH)
-
-# Базовый Proxy URL
-BASE_PROXY_API_URL = "https://{0}/method/".format(HOST_API_PROXY)
-BASE_PROXY_OAUTH_URL = "https://{0}/".format(HOST_OAUTH_PROXY)
-
-# Версия API
-VK_API_VERSION = "5.89"
-
-#Время ожидания ответа
-TIME_OUT = 10
-
-# Юзер-агент пользователя
-HEADER = {'user-agent': 'VKAndroidApp/5.40-3904'}
-
-# Прокси от KateMobile
-PROXY_KATE = {'https' : 'https://proxy.katemobile.ru:3752'}
-
-# Мне было лень генерировать receipt.
-# По хорошему его можно получить тут(android.clients.google.com/c2dm/register3)
-#receipt = "GF54PiFkdbb:APA91bEgyuoeagtS_1avbyY-_6UPRQ5fCJZwbv016qlNY-84iM81bfJgzIc28Tq_U7rvCqWb04nCOlj1M5A2yvZ793cnF8uZHhvKoGeHv9IzmR2ysSkKCn3aAff01IYFEv5nZFf02_hkVfszB2TRJ21XTNaUtvYO9A"
 receipt = "JSv5FBbXbY:APA91bF2K9B0eh61f2WaTZvm62GOHon3-vElmVq54ZOL5PHpFkIc85WQUxUH_wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4"
 
 # client_id и client_secret приложений
-client_keys = [
-  [2274003, 'hHbZxrka2uZ6jB1inYsH'], # 'Android'
-  [3140623, 'VeWdmVclDCtn6ihuP1nt'], # 'iPhone'
-  [3682744, 'mY6CDUswIVdJLCD3j15n'], # 'iPad'
-  [3697615, 'AlVXZFMUqyrnABp8ncuU'], # 'Windows PC'
-  [2685278, 'lxhD8OD7dMsqtXIm5IUY'], # 'Kate Mobile'
-  [5027722, 'Skg1Tn1r2qEbbZIAJMx3'], # 'VK Messenger'
-  [4580399, 'wYavpq94flrP3ERHO4qQ'], # 'Snapster (Android)'
-  [2037484, 'gpfDXet2gdGTsvOs7MbL'], # 'Nokia (Symbian)'
-  [3502557, 'PEObAuQi6KloPM4T30DV'], # 'Windows Phone'
-  [3469984, 'kc8eckM3jrRj8mHWl9zQ'], # 'Lynt'
-  [3032107, 'NOmHf1JNKONiIG5zPJUu']  # 'Vika (Blackberry)'
-]
+clients_credential = {
+    'android': {
+        'client_id': 2274003, 
+        'client_secret': 'hHbZxrka2uZ6jB1inYsH'
+    },
+    'iPhone': {
+        'client_id': 3140623, 
+        'client_secret': 'VeWdmVclDCtn6ihuP1nt'
+    },
+    'iPad': {
+        'client_id': 3682744, 
+        'client_secret': 'mY6CDUswIVdJLCD3j15n'
+    },
+    'WindowsPC': {
+        'client_id': 3697615, 
+        'client_secret': 'AlVXZFMUqyrnABp8ncuU'
+    },
+    'KateMobile': {
+        'client_id': 2685278, 
+        'client_secret': 'lxhD8OD7dMsqtXIm5IUY'
+    },
+    'VKMessenger': {
+        'client_id': 5027722, 
+        'client_secret': 'Skg1Tn1r2qEbbZIAJMx3'
+    },
+    'Snapster': {
+        'client_id': 4580399, 
+        'client_secret': 'wYavpq94flrP3ERHO4qQ'
+    },
+    'Nokia': {
+        'client_id': 2037484, 
+        'client_secret': 'gpfDXet2gdGTsvOs7MbL'
+    },
+    'WindowsPhone': {
+        'client_id': 3502557, 
+        'client_secret': 'PEObAuQi6KloPM4T30DV'
+    },
+    'Lynt': {
+        'client_id': 3469984, 
+        'client_secret': 'kc8eckM3jrRj8mHWl9zQ'
+    },
+    'Vika': {
+        'client_id': 3032107, 
+        'client_secret': 'NOmHf1JNKONiIG5zPJUu'
+    }
+}
 
 
-class VKException(Exception):
-  pass
+class VKLightOauth:
 
-
-def call_oauth(method, proxy, param=None, **kwargs):
-    
-    HOST = ''
-
-    if proxy:
-      HOST = BASE_OAUTH_URL
-    else:
-      HOST = BASE_PROXY_OAUTH_URL
-
-    try:
-        response = requests.get(HOST + method,
-            params=param, headers=HEADER, timeout=TIME_OUT).json()
-    except Exception as e:
-        raise e
-
-    if 'error' in response:
-        if 'need_captcha' == response['error']:
-            return dict(type="need_captha", raw=response)
+    def __init__(self, param=dict()):
+        self.__param = param
+        self.oauth_param = {
+            'grant_type': 'password', 
+            'client_id': '', 
+            'client_secret': '', 
+            'username': self.__param.get('login', ''), 
+            'password': self.__param.get('password', ''),  
+            '2fa_supported': self.__param.get('2fa_supported', 1), 
+            'code': self.__param.get('code', None), 
+            'captcha_sid': self.__param.get('captcha_sid', None),
+            'captcha_key': self.__param.get('captcha_key', None),
+            'force_sms': 1
+        }
+        self.host = proxyOauthHost if self.__param.get("proxy", False) else host_oauth
+        self.host = param['host'] if self.__param.get("host", '') else self.host
+        self.baseURL = f"https://{self.host}/token/"
         
-        elif 'need_validation' == response['error']:
-            if 'ban_info' in response:
-                # print(response)
-                raise VKException("Error: {error_description}".format(**response))
-            
-            return "Error: 2fa isn't supported"
+        self.apiVersion = self.__param.get("v", param) or apiVersion
+        self.url_param = dict(v=self.apiVersion)
         
-        else:
-            raise VKException("Error : {error_description}".format(**response))
+        self.applcation_name = self.__param.get('application_name', 'android')
+        
+        self.oauth_param = {
+            **self.oauth_param, 
+            **clients_credential.get(self.applcation_name)
+        }
 
-    return response
+    def go(self) -> dict: 
+        try:
+            resp = requests.post(
+                self.baseURL,
+                data=self.oauth_param,
+                params=self.url_param, 
+                headers=userAgent, 
+                timeout=10
+            ).json()
 
+        except Exception as e:
+            raise e
+        
+        if 'error' in resp:
+            raise VKLightOauthError(resp)
 
-def call(method, proxy, param=None, **kwargs):
-    HOST = ''
-    if proxy:
-      HOST = BASE_PROXY_API_URL
-    else:
-      HOST = BASE_API_URL
-    try:
-        response = requests.get(HOST + method,
-            params=param, headers=HEADER, timeout=TIME_OUT).json()
-    except Exception as e:
-        raise e
-
-    if 'error' in response:
-        raise VKException("VKError ("+ method +") #{error_code}: {error_msg}".format(**response['error']))
-
-    return response
-
-
-def autorization(login, password, proxy=False, code=None, captcha_sid=None, captcha_key=None):
-    param = {
-      'grant_type': 'password',
-      'client_id': client_keys[0][0],
-      'client_secret': client_keys[0][1],
-      'username': login,
-      'password': password,
-      'v': VK_API_VERSION,
-      '2fa_supported': '1',
-      'code':code,
-      'captcha_sid' : captcha_sid,
-      'captcha_key' : captcha_key
-    }
-    return call_oauth("token", proxy, param)
+        return resp
 
 
-def refreshToken(access_token, proxy=False):
-    param = {
-        'access_token': access_token,
-        'receipt' : receipt,
-        'v' : VK_API_VERSION
-    }
+class VKLight:
+    """VKLight - Modifed module special for this app"""
 
-    return call("auth.refreshToken", proxy, param)
+    def __init__(self, param= dict()):
+        """
+        :param: Dictionary including  fields such as 'access_token' (required), 'v' and etc.
 
+        For example: dict(access_token="your access_token", v='5.125', lang="en", host="api.vk.me")
+        """
+        super(VKLight, self).__init__()
 
-def user_get(access_token, proxy=False):
-    param = {
-        'access_token':access_token,
-        'v':VK_API_VERSION
-    }
+        self.access_token = self.__v("access_token", param) or ""
+        self.apiVersion = self.__v("v", param) or apiVersion
+        self.lang = self.__v("lang", param) or "en"
+        
+        self.host = proxyHost if self.__v("proxy", param) else host
+        self.host = param['host'] if self.__v("host", param) else self.host
+        self.baseURL = f"https://{self.host}/method/"
+        self.url_param = dict(lang=self.lang, v=self.apiVersion)
 
-    return call("users.get", proxy, param)
+    def __call__(self, method:str, args=dict()):
+        return self.call(method, args)
 
+    def call(self, method:str, args=dict()) -> dict:
+        """
+        Calls VK API methods
+        :param method: VK API method name.
+        :param args: arguments of this method.
+        """
+        args['access_token'] = self.access_token
 
-def get_audio(refresh_token, proxy=False):
-    param = {
-        'access_token':refresh_token,
-        'v': VK_API_VERSION
-    }
+        try:
+            resp = requests.post(
+                f"{self.baseURL}{method}", 
+                data=args,
+                params=self.url_param, 
+                headers=userAgent, 
+                timeout=10
+            ).json()
 
-    return call("audio.get", proxy, param)
+        except Exception as e:
+            raise e
 
+        if 'error' in resp:
+            raise VKLightError(resp['error']['error_code'], resp['error']['error_msg'])
 
-def get_catalog(refresh_token, proxy=False):
-    param = {
-      'access_token':refresh_token,
-      'v': VK_API_VERSION
-    }
-
-    return call("audio.getCatalog", proxy, param)
-
-
-def get_playlist(refresh_token, proxy=False):
-    param = {
-      'access_token':refresh_token,
-      'owner_id':'',
-      'id':'',
-      'need_playlist':1,
-      'v': VK_API_VERSION
-    }
-
-    return call("execute.getPlaylist", proxy, param)
-
-
-def get_music_page(refresh_token, proxy=False):
-    param = {
-      'func_v':3,
-      'need_playlists':1,
-      'access_token':refresh_token,
-      'v': VK_API_VERSION
-    }
-
-    return call("execute.getMusicPage", proxy, param)
+        return resp
     
+    def execute(self, code:str=""):
+        """
+        Calls Execute method
+        Learn More: https://vk.com/dev/execute
+           
+        param:code= VKScript code 
+        """
+        return self.call("execute", {"code": code})
+
+    def is_usage_domain_me(self):
+        """Используется ли домен .me"""
+        return self.host == "api.vk.me"
+
+    def __v(self, key, dict_data: dict):
+        return dict_data[key] if key in dict_data else ""
+
+
+
+class VKLightError(Exception):
+    """ VKLight Exception for errros from VK API's """
+    def __init__(self, error_code, message):
+        """
+        :param error_code: Code of Error
+        :param message: Error message
+        """
+        self.message, self.error_code = message, error_code
+
+    def __str__(self):
+        return "VKLightError {}: {}".format(self.error_code, self.message)
+
+
+class VKLightOauthError(Exception):
+    """ VKLight Exception for errros from VK Oauth API's """
+    def __init__(self, response):
+        self.error = response['error']
+        self.error_description = response.get('error_description', '')
+
+        self.__dict__.update(response)
+
+    def __str__(self):
+        return "VKLightOauthError: ({}) {}".format(self.error, self.error_description)

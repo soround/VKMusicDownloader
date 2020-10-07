@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ApplicationName = "VKMusicDownloader"
-ApplicationVersion = "1.1.7"
+ApplicationVersion = "1.1.10"
 ApplicationBranch = "Public Release"
 Description =  "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
@@ -13,4 +13,4 @@ IconPathV3 = "assets/icon/downloader.png"
 License = "https://github.com/keyzt/VKMusicDownloader/blob/master/LICENSE"
 SourceСode = "https://github.com/keyzt/VKMusicDownloader"
 
-SaveToFile = True
+NoSaveToFile = True

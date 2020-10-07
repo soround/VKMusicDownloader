@@ -8,13 +8,14 @@ import locale
 
 import config
 import utils
-import vkapi
 
 from ui import auth
 from ui import tech_info
 from ui import mainwindow
 
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, QMessageBox, QFileDialog, QInputDialog, QStyleFactory
+from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
+
+from PyQt5.QtWidgets import QWidget, QApplication, QMessageBox, QFileDialog, QInputDialog
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, QThread, QObject, Qt, pyqtSignal
@@ -34,63 +35,105 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
         self.statusBar().showMessage("2fa is supported :)")
 
-        self.pushButton.clicked.connect(self.autorizations)
+        self.pushButton.clicked.connect(self.go)
         self.pushButton.setShortcut("Return")
 
+        self.oauth = VKLightOauth(dict())
 
-    def autorizations(self):
-        try:
+
+    def go(self):
             
-            login = self.lineEdit.text()
-            password = self.lineEdit_2.text()
+        login = self.lineEdit.text()
+        password = self.lineEdit_2.text()
 
-            isProxyOauth = utils.get_proxy_host(self.action.isChecked(), False)
-            isProxyAPI = self.action.isChecked()
+        self.statusBar().showMessage('Loading...')
 
-            self.statusBar().showMessage('Loading...')
+        self.oauth = VKLightOauth(
+            dict(
+                login=login,
+                password=password,
+                proxy=self.action.isChecked()
+            )
+        )
 
-            r = vkapi.autorization(login, password, isProxyOauth)
+        try:
+            try:
+                r = self.oauth.go()
+            
+            except VKLightOauthError as e:
+                if 'need_validation' in e.error:
+                    if 'ban_info' in dir(e):
+                        return QMessageBox.critical(self, "F*CK", str(e))
 
-            # QMessageBox.about(self, "Message", str(r))
+                    code, ok = QInputDialog.getText(
+                        self, 
+                        "Подтвердите номер", 
+                        "Мы отправили SMS с кодом на номер"
+                    )
 
-            if (r =="Error: 2fa isn't supported"):
-                code, ok = QInputDialog.getText(self, "Код потверждения", "Введите код из СМС")
-
-                if ok:
-                    r = vkapi.autorization(login, password, isProxyOauth, str(code))
+                    if ok:
+                        self.oauth = VKLightOauth(
+                            dict(
+                                login=login,
+                                password=password,
+                                proxy=self.action.isChecked(),
+                                code=code
+                            )
+                        )
+                        r = self.oauth.go()
                 else:
-                    r = vkapi.autorization(login, password, isProxyOauth, "")
+                    raise e
 
-            resp = json.loads(json.dumps(r))
+            self.statusBar().showMessage('Done!')
 
-            if (resp.get('access_token') != None):
-
-                self.statusBar().showMessage('Done!')
-                access_token = resp['access_token']
-
-                self.statusBar().showMessage('Getting refresh_token')
-
-                getRefreshToken = vkapi.refreshToken(access_token, isProxyAPI)
-                refresh_token = getRefreshToken["response"]["token"]
-
-                DATA = {'access_token': access_token, 'token': refresh_token}
-                utils.save_json("DATA", DATA)
-
-                #Запуск главного окна
-                self.window = MainWindow()
-                self.hide()
-                self.window.show()
-
-            else:
-                self.statusBar().showMessage('Login failed :(')
-                QMessageBox.critical(self, "F*CK", str(resp))
         
-        except vkapi.VKException as ex:
-            QMessageBox.critical(self, "F*CK VK", str(ex))
+        except VKLightOauthError as e:
+            
+            if 'need_captcha' in e.error:
+                return QMessageBox.critical(self, 'F*CK', 'F*CKING CAPTHA')
+            else:
+                return QMessageBox.critical(self, 'F*CK', str(e))
 
         except Exception as e:
             self.statusBar().showMessage('Login failed :(')
             QMessageBox.critical(self, "F*CK", str(e))
+
+
+        access_token = r['access_token']
+        refresh_token = ""
+
+        api = VKLight(dict(
+                access_token=access_token,
+                proxy=self.action.isChecked()
+            )
+        )
+
+        if not api.is_usage_domain_me():
+            from vkapi import receipt
+            self.statusBar().showMessage('Getting refresh_token')
+            refresh_token = api.call("auth.refreshToken",
+                dict(access_token=access_token, receipt=receipt)
+            )
+
+        DATA = {'access_token': access_token, 'token': refresh_token}
+        utils.save_json("DATA", DATA)
+
+        #Запуск главного окна
+        self.window = MainWindow()
+        self.hide()
+        self.window.show()
+
+
+# class GoAuth(QThread):
+#     response = pyqtSignal(dict)
+#     DATA = pyqtSignal(dict)
+
+#     def __init__(self, oauth_instance=None):
+#         super().__init__()
+#         self.oauth_instance = oauth_instance
+
+#     def run(self):
+#         print("Hi")
 
 
 # Техническая информация
@@ -141,6 +184,55 @@ class TechInfo(QWidget, tech_info.Ui_Form):
     def exit(self): self.close()
 
 
+class NetworkInfo(QThread):
+
+    internal_ip = pyqtSignal(str)
+    external_ip = pyqtSignal(str)
+    hostname = pyqtSignal(str)
+    location = pyqtSignal(str)
+    api = pyqtSignal(str)
+    oauth = pyqtSignal(str)
+
+    def __init__(self, host_api, host_oauth):
+        super().__init__()
+        self.host_api = host_api
+        self.host_oauth = host_oauth
+
+
+    def run(self):
+        try:
+            self.internal_ip.emit(utils.get_internal_ip())
+            data = utils.get_network_info()
+            loc = data['country'] + ", " + data['region'] + ", " + data['city']
+            self.external_ip.emit(data['ip'])
+            if 'hostname' in data: self.hostname.emit(data['hostname'])
+            self.location.emit(loc)
+
+        except Exception:
+            self.internal_ip.emit(utils.get_internal_ip())
+            self.external_ip.emit(None)
+            self.hostname.emit(None)
+            self.location.emit(None)
+
+        if utils.check_connection(self.host_api):
+            status = "Хост: [" + self.host_api + "] - Доступен"
+            self.api.emit(status)
+        else:
+            status = "Хост: [" + self.host_api + "] - Недоступен"
+            self.api.emit(status)
+
+        if utils.check_connection(self.host_oauth):
+            status = "Хост: [" + self.host_oauth + "] - Доступен"
+            self.oauth.emit(status)
+        else:
+            status = "Хост: [" + self.host_oauth + "] - Недоступен"
+            self.oauth.emit(status)
+
+
+    def __del__(self):
+        print("Never Say Goodbye")
+
+
 # Главное окно приложения         
 class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
     
@@ -157,15 +249,18 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
         self.action_2.setShortcut("Ctrl+Q")
         self.action_2.triggered.connect(self.Logout)
         self.action_4.triggered.connect(self.TechInformation)
-        self.progressBar.setFormat("%p% (%v/%m)")
         self.action_4.setShortcut("Ctrl+T")
+        self.progressBar.setFormat("%p% (%v/%m)")
 
+        self.api = VKLight(dict())
+        self.data = None
         self.th = None
         self.is_loaded = False
-        self.data = None
         self.getSelected = []
         self.downloads_list = []
         self.PATH = ""
+
+        self.count_track = 0
 
 
     def LoadsListMusic(self):
@@ -174,91 +269,103 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
             
             with open('DATA', encoding='utf-8') as data_json:
                 data_token = json.loads(data_json.read())
-
+                access_token = data_token["access_token"]
+                refresh_token = data_token["token"]
             
-            refresh_token = data_token["token"]
+            self.api = VKLight(dict(
+                    access_token=access_token,
+                    proxy=self.action_5.isChecked()
+                )
+            )
+
+            if not self.api.is_usage_domain_me():
+                from vkapi import receipt
+                if refresh_token == "":
+                    refresh_token = self.api.call("auth.refreshToken",
+                        dict(access_token=access_token, receipt=receipt)
+                    )['response']['token']
+
+                self.api.access_token = refresh_token
+                utils.save_json('DATA', dict(
+                        access_token=access_token,
+                        refresh_token=refresh_token
+                    )
+                )
+
+            self.api_data = self.api.call("audio.get")['response']
+            self.count_track = self.api_data['count']
             
-            isProxyAPI = self.action_5.isChecked()
+            from models import Audio
+            self.data = [Audio(item) for item in self.api_data['items']]
+
+            if not (config.NoSaveToFile): utils.save_json('response.json', self.api_data)
             
-            self.data = vkapi.get_audio(refresh_token, isProxyAPI)
-
-            if(config.SaveToFile):
-                utils.save_json('response.json', self.data)
-
-            count_track = self.data['response']['count']
-            i = 0
-
             QtWidgets.QTreeWidget.clear(self.treeWidget)
-
-            for count in self.data['response']['items']:
+            
+            for i, count in enumerate(self.data, 1):
 
                 test = QtWidgets.QTreeWidgetItem(self.treeWidget)
 
-                test.setText(0, str(i + 1))
-                test.setText(1, count['artist'])
-                test.setText(2, count['title'])
-                test.setText(3, utils.time_duration(count['duration']))
-                test.setText(4, utils.unix_time_stamp_convert(count['date']))
+                test.setText(0, str(i))
+                test.setText(1, count.artist)
+                test.setText(2, count.title)
+                test.setText(3, utils.time_duration(count.duration))
+                test.setText(4, utils.unix_time_stamp_convert(count.date))
 
-                if (count.get('is_hq')):
-                    if (count.get('is_explicit')):
+                if (count.is_hq):
+                    if (count.is_explicit):
                         test.setText(5, "HQ (E)")
                     else:
                         test.setText(5, "HQ")
-
                 else:
-                    if count.get('is_explicit'):
+                    if (count.is_explicit):
                         test.setText(5, "E")
-
-
-                if not (count.get('url', False)):
+                
+                if (count.url == ""):
                     test.setText(6, "Недоступно")
 
-                i += 1
+            self.label.setText(
+                "Всего аудиозаписей: " + str(self.count_track) + 
+                " Выбрано: " + str(0) + 
+                " Загружено: " + str(0)
+            )
 
-            self.label.setText("Всего аудиозаписей: " + str(count_track) + " Выбрано: " + str(0) + " Загружено: " + str(0))
             self.is_loaded = True
 
-        except vkapi.VKException as ex:
-            QMessageBox.critical(self, "F*CK VK", str(ex))
-
-        except Exception as e:
-            QMessageBox.critical(self, "F*CK", str(e))
+        except (VKLightError, Exception )as ex:
+            QMessageBox.critical(self, "F*CK", str(ex))
 
 
     def Downloads(self, started):
         try:
-            if self.is_loaded != True:
+            if not self.is_loaded:
                 self.pushButton.setChecked(False)
-                raise Exception("Вы не загрузили список аудиозаписей")
+                return QMessageBox.information(
+                    self, 
+                    "Информация", 
+                    "Вы не загрузили список аудиозаписей"
+                )
+
+            self.downloads_list = [int(i.text(0)) - 1  for i in self.treeWidget.selectedItems()]
+
+            if (len(self.downloads_list) == 0):
+                self.pushButton.setChecked(False)
+                return QMessageBox.information(self, "Информация", "Ничего не выбрано.")
+
 
             if started:
 
                 self.PATH = utils.get_path(self, self.action_7.isChecked(), QFileDialog)
                 self.label_2.setText("Путь для скачивания: " + self.PATH)
-
                 self.completed = 0
-                self.getSelected = self.treeWidget.selectedItems()
-
-                for i in self.getSelected:
-                    self.downloads_list.append(int(i.text(0)))
-
-                if (config.SaveToFile):
-                    if (utils.file_exists('response.json')):
-                        with open('response.json', encoding='utf-8') as data_json:
-                            self.data = json.loads(data_json.read())
-                    else:
-                        raise Exception("File \"response.json\" not found")
-
-                if (self.downloads_list.__len__() == 0):
-                    QMessageBox.information(self, "Информация", "Ничего не выбрано.")
-
                 self.pushButton.setText("Остановить")
                 
-                if(config.SaveToFile):
-                    self.th = Downloads_file(self.PATH, self.downloads_list)
-                else:
-                    self.th = Downloads_file(self.PATH, self.downloads_list, self.data)
+                self.th = Downloads_file(
+                    self.count_track,
+                    self.PATH, 
+                    self.downloads_list,
+                    self.data
+                )
 
                 self.th.progress_range.connect(self.progress)
                 self.th.progress.connect(self.progressBar.setValue)
@@ -282,14 +389,17 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
 
 
     def set_ui_default(self):
-        self.getSelected = []
         self.downloads_list = []
         self.pushButton.setText("Скачать")
         self.pushButton.setChecked(False)
         self.progressBar.setValue(0)
         self.progressBar.setRange(0, 100)
         self.label_3.setText("Загружается: ")
-        self.label.setText("Всего аудиозаписей: " + str(self.data['response']['count']) + " Выбрано: " + str(0) + " Загружено: " + str(0))
+        self.label.setText(
+            "Всего аудиозаписей: " + str(self.count_track) + 
+            " Выбрано: " + str(0) + 
+            " Загружено: " + str(0)
+        )
 
 
     @pyqtSlot()
@@ -345,18 +455,19 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
 
 
     def TechInformation(self):
-        if (self.action_5.isChecked()):
-            path_api = 'https://' + vkapi.HOST_API_PROXY
-            path_oauth = 'https://' + vkapi.HOST_OAUTH_PROXY
-        else:
-            path_api = 'https://' + vkapi.HOST_API
-            path_oauth = 'https://' + vkapi.HOST_OAUTH
-        
-        self.tech_info_window = TechInfo(path_api, path_oauth)
+        self.tech_info_window = TechInfo(
+            VKLight(dict(proxy=self.action_5.isChecked())).baseURL,
+            VKLightOauth(dict(proxy=self.action_5.isChecked())).baseURL
+        )
 
 
     def Logout(self):
-        reply = QMessageBox.question(self, "Выход из аккаунта","Вы точно хотите выйти из аккаунта?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        reply = QMessageBox.question(
+            self, 
+            "Выход из аккаунта","Вы точно хотите выйти из аккаунта?", 
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
 
         if reply == QMessageBox.Yes:
             if (utils.file_exists("DATA")):
@@ -385,53 +496,46 @@ class Downloads_file(QThread):
     unavailable_audio = pyqtSignal(str)
     content_restricted = pyqtSignal(int, str)
 
-    def __init__(self, PATH, downloads_list=None, data=None):
+    def __init__(self, count_track, PATH, downloads_list=None, data=None):
         super().__init__()
+        self.count_track = count_track
         self.downloads_list = downloads_list
+        self.selected_audios = len(self.downloads_list)
         self.data = data
         self.PATH = PATH
 
 
     def run(self):
         try:
-            if(config.SaveToFile):
-                if (utils.file_exists('response.json')):
-                    with open('response.json', encoding='utf-8') as data_json:
-                        self.data = json.loads(data_json.read())
-                else:
-                    raise Exception("File \"response.json\" not found")
-
             self.completed = 0
 
-            count_track = self.data['response']['count']
-            selected = self.downloads_list.__len__()
-
             for item in self.downloads_list:
-                
-                artist = self.data['response']['items'][item-1]['artist']
-                title = self.data['response']['items'][item-1]['title']
+                msg = "Всего аудиозаписей: " + str(self.count_track) + \
+                      " Выбрано: " + str(self.selected_audios) + \
+                      " Загружено: " + str(self.completed)
 
-                msg = "Всего аудиозаписей: " + str(count_track) + " Выбрано: " + str(selected) + " Загружено: " + str(self.completed)
+                filename = self.PATH + "/" + self.data[item].get_filename()
 
-                song_name = artist + " - " + title
-
-                filename = self.PATH + "/" + utils.fix_file_name(song_name) + ".mp3"
-                url = self.data['response']['items'][item-1]['url']
-
-
-                if (self.data['response']['items'][item-1]['url'] == ""):
-                    
-                    if (self.data['response']['items'][item-1]['content_restricted']):
-                        self.content_restricted.emit(int(self.data['response']['items'][item-1]['content_restricted']), song_name)
+                if (self.data[item].url == ""):
+                    if (self.data[item].content_restricted):
+                        self.content_restricted.emit(
+                            int(
+                                self.data[item].content_restricted
+                            ),  str(self.data[item])
+                        )
 
                     else:
-                        self.unavailable_audio.emit(song_name)
-
+                        self.unavailable_audio.emit(str(self.data[item]))
                 else:
                     self.message.emit(msg)
-                    self.loading_audio.emit(song_name)
-                    utils.downloads_files_in_wget(url, filename, self.update_progress)
-                    #utils.downloads_files(url, filename, self.progress)
+                    self.loading_audio.emit(str(self.data[item]))
+                    
+                    utils.downloads_files_in_wget(
+                        self.data[item].url, 
+                        filename, 
+                        self.update_progress
+                    )
+                    
                     self.completed += 1
 
             self.finished.emit()
@@ -446,64 +550,12 @@ class Downloads_file(QThread):
         self.progress.emit(current)
 
 
-class NetworkInfo(QThread):
-
-    internal_ip = pyqtSignal(str)
-    external_ip = pyqtSignal(str)
-    hostname = pyqtSignal(str)
-    location = pyqtSignal(str)
-    api = pyqtSignal(str)
-    oauth = pyqtSignal(str)
-
-    def __init__(self, host_api, host_oauth):
-        super().__init__()
-        self.host_api = host_api
-        self.host_oauth = host_oauth
-
-
-    def run(self):
-        try:
-            self.internal_ip.emit(utils.get_internal_ip())
-
-            data = utils.get_network_info()
-            loc = data['country'] + ", " + data['region'] + ", " + data['city']
-
-            self.external_ip.emit(data['ip'])
-            if 'hostname' in data: self.hostname.emit(data['hostname'])
-            self.location.emit(loc)
-
-        except Exception:
-            self.internal_ip.emit(utils.get_internal_ip())
-            self.external_ip.emit(None)
-            self.hostname.emit(None)
-            self.location.emit(None)
-
-        if utils.check_connection(self.host_api):
-            status = "Хост: [" + self.host_api + "] - Доступен"
-            self.api.emit(status)
-        else:
-            status = "Хост: [" + self.host_api + "] - Недоступен"
-            self.api.emit(status)
-
-        if utils.check_connection(self.host_oauth):
-            status = "Хост: [" + self.host_oauth + "] - Доступен"
-            self.oauth.emit(status)
-        else:
-            status = "Хост: [" + self.host_oauth + "] - Недоступен"
-            self.oauth.emit(status)
-
-
-    def __del__(self):
-        print("Never Say Goodbye")
-        # self.wait()
-
-
 def start():
     try:
         if "--version" in sys.argv:
             sys.exit(config.ApplicationName + " " +config.ApplicationVersion + " " + config.ApplicationBranch)
         
-        path = "DATA"
+        auth_file = "DATA"
         
         app = QApplication(sys.argv)
         app.setWindowIcon(QIcon(config.IconPath))
@@ -511,7 +563,7 @@ def start():
         app.setApplicationVersion(config.ApplicationVersion)
         app.setStyle('Fusion')
 
-        if (utils.file_exists(path)):
+        if (utils.file_exists(auth_file)):
             ex = MainWindow()
             ex.show()
             sys.exit(app.exec_())

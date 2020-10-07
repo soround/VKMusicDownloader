@@ -6,14 +6,14 @@ import re
 import datetime
 import json
 
-import requests
 import socket
+import requests
 import wget
 
-import vkapi
+from config import ApplicationName, ApplicationVersion
 
 
-def fix_file_name(filename):
+def fix_filename(filename):
     if len(filename) >=128:
         return re.sub(r'[\\\\/:*?\"<>|\n\r\xa0]', "", filename[0:126])
     else:
@@ -29,30 +29,21 @@ def file_exists(path):
 
 def get_path(self, flags, Object):
     if flags:
-        path = Object.getExistingDirectory(self, "Выберите папку для скачивания", "", Object.ShowDirsOnly)
-        if path == "":
-            return os.getcwd()
-        else:
-            return path
+        path = Object.getExistingDirectory(
+            self, 
+            "Выберите папку для скачивания", 
+            "", 
+            Object.ShowDirsOnly
+        )
+
+        return path if path != "" else os.getcwd()
     else:
         return os.getcwd()
 
 
-def get_proxy_host(flags, api=True):
-    if flags:
-        if api:
-            return vkapi.BASE_PROXY_API_URL
-        else:
-            return vkapi.BASE_PROXY_OAUTH_URL
-    else:
-        if api:
-            return vkapi.BASE_API_URL
-        else:
-            return vkapi.BASE_OAUTH_URL
-
 def check_connection(url):
     try:
-        requests.get(url, timeout=5)
+        requests.head(url, timeout=5)
     except Exception:
         return False
 
@@ -68,8 +59,9 @@ def get_internal_ip():
 
 def get_external_ip():
     try:
-        return bytes(requests.get("http://ident.me/", timeout=5).content
-            ).decode("utf-8")
+        return bytes(
+            requests.get("http://ident.me/", timeout=5).content
+        ).decode("utf-8")
 
     except Exception:
         return None
@@ -95,3 +87,14 @@ def save_json(filename, data):
 
 def downloads_files_in_wget(url, filename, progress):
     wget.download(url, filename, bar=progress)
+
+
+def get_user_agent(usage_application_name):
+    if usage_application_name:
+        return {
+            'user-agent': 'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; '+ ApplicationName + ' ' + ApplicationVersion +'; ru; 1920x1080)'
+        }
+    else:
+        return {
+            'user-agent': 'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; Unknown; ru; 1920x1080)'
+        }
