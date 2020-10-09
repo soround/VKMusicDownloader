@@ -124,18 +124,6 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         self.window.show()
 
 
-# class GoAuth(QThread):
-#     response = pyqtSignal(dict)
-#     DATA = pyqtSignal(dict)
-
-#     def __init__(self, oauth_instance=None):
-#         super().__init__()
-#         self.oauth_instance = oauth_instance
-
-#     def run(self):
-#         print("Hi")
-
-
 # Техническая информация
 class TechInfo(QWidget, tech_info.Ui_Form):
 
