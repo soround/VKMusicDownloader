@@ -351,12 +351,16 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
 
             if (len(self.downloads_list) == 0):
                 self.pushButton.setChecked(False)
-                return QMessageBox.information(self, "Информация", "Ничего не выбрано.")
+                return QMessageBox.information(
+                    self, "Информация", "Ничего не выбрано."
+                )
 
 
             if started:
 
-                self.PATH = utils.get_path(self, self.action_7.isChecked(), QFileDialog)
+                self.PATH = utils.get_path(self, 
+                    self.action_7.isChecked(), QFileDialog
+                )
                 self.label_2.setText("Путь для скачивания: " + self.PATH)
                 self.completed = 0
                 self.pushButton.setText("Остановить")
@@ -410,7 +414,9 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
 
     @pyqtSlot(str)
     def aborted_download(self, err_msg):
-        QMessageBox.critical(self, "F*CK", "Загрузка прервана. Причина: " + err_msg)
+        QMessageBox.critical(self, 
+            "F*CK", "Загрузка прервана. Причина: " + err_msg
+        )
         self.set_ui_default()
 
     @pyqtSlot(str)
@@ -526,7 +532,9 @@ class Downloads_file(QThread):
                         )
 
                     else:
-                        self.unavailable_audio.emit(str(self.data[item]))
+                        self.unavailable_audio.emit(
+                            str(self.data[item])
+                        )
                 else:
                     self.message.emit(msg)
                     self.loading_audio.emit(str(self.data[item]))
@@ -554,7 +562,11 @@ class Downloads_file(QThread):
 def start():
     try:
         if "--version" in sys.argv:
-            sys.exit(config.ApplicationName + " " +config.ApplicationVersion + " " + config.ApplicationBranch)
+            sys.exit(
+                config.ApplicationName + " " +
+                config.ApplicationVersion + " " + 
+                config.ApplicationBranch
+            )
         
         auth_file = "DATA"
         
@@ -568,6 +580,7 @@ def start():
             ex = MainWindow()
             ex.show()
             sys.exit(app.exec_())
+        
         else:
             ex = Auth()
             ex.show()
