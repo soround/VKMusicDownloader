@@ -15,10 +15,12 @@ from ui import mainwindow
 
 from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
 
+from threads import Downloads_file, NetworkInfo
+
 from PyQt5.QtWidgets import QWidget, QApplication, QMessageBox, QFileDialog, QInputDialog
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot, QThread, QObject, Qt, pyqtSignal
+from PyQt5.QtCore import pyqtSlot, Qt
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -172,57 +174,8 @@ class TechInfo(QWidget, tech_info.Ui_Form):
     def exit(self): self.close()
 
 
-class NetworkInfo(QThread):
-
-    internal_ip = pyqtSignal(str)
-    external_ip = pyqtSignal(str)
-    hostname = pyqtSignal(str)
-    location = pyqtSignal(str)
-    api = pyqtSignal(str)
-    oauth = pyqtSignal(str)
-
-    def __init__(self, host_api, host_oauth):
-        super().__init__()
-        self.host_api = host_api
-        self.host_oauth = host_oauth
-
-
-    def run(self):
-        try:
-            self.internal_ip.emit(utils.get_internal_ip())
-            data = utils.get_network_info()
-            loc = data['country'] + ", " + data['region'] + ", " + data['city']
-            self.external_ip.emit(data['ip'])
-            if 'hostname' in data: self.hostname.emit(data['hostname'])
-            self.location.emit(loc)
-
-        except Exception:
-            self.internal_ip.emit(utils.get_internal_ip())
-            self.external_ip.emit(None)
-            self.hostname.emit(None)
-            self.location.emit(None)
-
-        if utils.check_connection(self.host_api):
-            status = "Хост: [" + self.host_api + "] - Доступен"
-            self.api.emit(status)
-        else:
-            status = "Хост: [" + self.host_api + "] - Недоступен"
-            self.api.emit(status)
-
-        if utils.check_connection(self.host_oauth):
-            status = "Хост: [" + self.host_oauth + "] - Доступен"
-            self.oauth.emit(status)
-        else:
-            status = "Хост: [" + self.host_oauth + "] - Недоступен"
-            self.oauth.emit(status)
-
-
-    def __del__(self):
-        print("Never Say Goodbye")
-
-
 # Главное окно приложения         
-class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
+class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     
     def __init__(self):
         super().__init__()
@@ -478,73 +431,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow, QObject):
             self.hide()
         else:
             pass
-
-
-class Downloads_file(QThread):
-
-    finished = pyqtSignal()
-    abort_download = pyqtSignal(str)
-    progress_range = pyqtSignal(int)
-    progress = pyqtSignal(int)
-    loading_audio = pyqtSignal(str)
-    message = pyqtSignal(str)
-    unavailable_audio = pyqtSignal(str)
-    content_restricted = pyqtSignal(int, str)
-
-    def __init__(self, count_track, PATH, downloads_list=None, data=None):
-        super().__init__()
-        self.count_track = count_track
-        self.downloads_list = downloads_list
-        self.selected_audios = len(self.downloads_list)
-        self.data = data
-        self.PATH = PATH
-
-
-    def run(self):
-        try:
-            self.completed = 0
-
-            for item in self.downloads_list:
-                msg = "Всего аудиозаписей: " + str(self.count_track) + \
-                      " Выбрано: " + str(self.selected_audios) + \
-                      " Загружено: " + str(self.completed)
-
-                filename = self.PATH + "/" + self.data[item].get_filename()
-
-                if (self.data[item].url == ""):
-                    if (self.data[item].content_restricted):
-                        self.content_restricted.emit(
-                            int(
-                                self.data[item].content_restricted
-                            ),  str(self.data[item])
-                        )
-
-                    else:
-                        self.unavailable_audio.emit(
-                            str(self.data[item])
-                        )
-                else:
-                    self.message.emit(msg)
-                    self.loading_audio.emit(str(self.data[item]))
-                    
-                    utils.downloads_files_in_wget(
-                        self.data[item].url, 
-                        filename, 
-                        self.update_progress
-                    )
-                    
-                    self.completed += 1
-
-            self.finished.emit()
-            self.loading_audio.emit('')
-
-        except Exception as e:
-            self.abort_download.emit(str(e))
-
-    # Magic. Do not touch.
-    def update_progress(self, current, total, width=80):
-        self.progress_range.emit(total)
-        self.progress.emit(current)
 
 
 def start():
