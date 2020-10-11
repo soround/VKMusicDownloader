@@ -10,8 +10,12 @@ host = "api.vk.me"
 host_oauth = "oauth.vk.com"
 proxyHost = "vk-api-proxy.xtrafrancyz.net"
 proxyOauthHost = "vk-oauth-proxy.xtrafrancyz.net"
-apiVersion = "5.89"
-userAgent = get_user_agent(True)
+apiVersion = "5.124"
+
+headers = { 
+    'user-agent': get_user_agent(True),
+    'x-vk-android-client': 'new'
+}
 
 receipt = "JSv5FBbXbY:APA91bF2K9B0eh61f2WaTZvm62GOHon3-vElmVq54ZOL5PHpFkIc85WQUxUH_wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4"
 
@@ -100,7 +104,7 @@ class VKLightOauth:
                 self.baseURL,
                 data=self.oauth_param,
                 params=self.url_param, 
-                headers=userAgent, 
+                headers=headers, 
                 timeout=10
             ).json()
 
@@ -149,7 +153,7 @@ class VKLight:
                 f"{self.baseURL}{method}", 
                 data=args,
                 params=self.url_param, 
-                headers=userAgent, 
+                headers=headers, 
                 timeout=10
             ).json()
 

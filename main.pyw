@@ -156,7 +156,7 @@ class TechInfo(QWidget, tech_info.Ui_Form):
 
     @pyqtSlot(str)
     def set_internal_ip(self, ip):
-        self.label.setText("Внутренний IP: " + ip)
+        self.label.setText(f"Внутренний IP: {ip}")
 
     @pyqtSlot(str)
     def set_external_ip(self, ip):
@@ -267,9 +267,9 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     test.setText(6, "Недоступно")
 
             self.label.setText(
-                "Всего аудиозаписей: " + str(self.count_track) + 
-                " Выбрано: " + str(0) + 
-                " Загружено: " + str(0)
+                f"Всего аудиозаписей: {str(self.count_track) }"+ 
+                f" Выбрано: {0}"+ 
+                f" Загружено: {0}"
             )
 
             self.is_loaded = True
@@ -342,9 +342,9 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.progressBar.setRange(0, 100)
         self.label_3.setText("Загружается: ")
         self.label.setText(
-            "Всего аудиозаписей: " + str(self.count_track) + 
-            " Выбрано: " + str(0) + 
-            " Загружено: " + str(0)
+            f"Всего аудиозаписей: {str(self.count_track) }"+ 
+            f" Выбрано: {0}"+ 
+            f" Загружено: {0}"
         )
 
 
@@ -356,30 +356,32 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     @pyqtSlot(str)
     def aborted_download(self, err_msg):
         QMessageBox.critical(self, 
-            "F*CK", "Загрузка прервана. Причина: " + err_msg
+            "F*CK", f"Загрузка прервана. Причина: {err_msg}"
         )
         self.set_ui_default()
 
     @pyqtSlot(str)
     def loading_audio(self, song_name):
         if len(song_name) > 115:
-            self.label_3.setText("Загружается: " + song_name[0:115])
+            self.label_3.setText(f"Загружается: {song_name[0:100]}...")
         else:
-            self.label_3.setText("Загружается: " + song_name)
+            self.label_3.setText(f"Загружается: {song_name}")
 
     @pyqtSlot(str)
     def unavailable_audio(self, song_name):
-        QMessageBox.warning(self, "Внимание",
-         "Аудиозапись: " + song_name + " недоступна в вашем регионе")
+        QMessageBox.warning(self, 
+            "Внимание",
+            f"Аудиозапись: {song_name} недоступна в вашем регионе"
+        )
 
     @pyqtSlot(int, str)
     def content_restricted(self, id_restrict,  song_name):
         if id_restrict == 1:
-            message = "Аудиозапись: " + song_name + " недоступна по решению правообладателя"
+            message = f"Аудиозапись: {song_name} недоступна по решению правообладателя"
         elif id_restrict == 2:
-            message = "Аудиозапись: " + song_name + " недоступна в вашем регионе по решению правообладателя"
+            message = f"Аудиозапись: {song_name} недоступна в вашем регионе по решению правообладателя"
         elif id_restrict == 5:
-            message = "Доступ к аудиозаписи: " + song_name + " скоро будет открыт"
+            message = f"Доступ к аудиозаписи: {song_name} скоро будет открыт"
         
         QMessageBox.warning(self, "Внимание", message)
 
@@ -437,9 +439,7 @@ def start():
     try:
         if "--version" in sys.argv:
             sys.exit(
-                config.ApplicationName + " " +
-                config.ApplicationVersion + " " + 
-                config.ApplicationBranch
+                config.ApplicationFullName
             )
         
         auth_file = "DATA"

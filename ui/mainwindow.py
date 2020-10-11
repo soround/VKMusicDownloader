@@ -175,7 +175,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", config.ApplicationName + " " + config.ApplicationVersion + " " + config.ApplicationBranch))
+        MainWindow.setWindowTitle(_translate("MainWindow", config.ApplicationFullName))
 
         self.treeWidget.setSortingEnabled(False)
         self.treeWidget.headerItem().setText(0, _translate("MainWindow", "Номер"))
@@ -190,7 +190,7 @@ class Ui_MainWindow(object):
         
         self.label.setText(_translate("MainWindow", "Всего аудиозаписей: Выбрано: Загружено:"))
         self.label_3.setText(_translate("MainWindow", "Загружается: "))
-        self.label_2.setText(_translate("MainWindow", "Путь для скачивания: " + os.getcwd()))
+        self.label_2.setText(_translate("MainWindow", f"Путь для скачивания: {os.getcwd()}"))
         
         self.progressBar.setFormat(_translate("MainWindow", ""))
         

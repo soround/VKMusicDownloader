@@ -6,6 +6,8 @@ ApplicationVersion = "1.1.10"
 ApplicationBranch = "Public Release"
 Description =  "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
+ApplicationFullName = f"{ApplicationName} {ApplicationVersion} {ApplicationBranch}"
+
 IconPath = "assets/icon/vk_downloader_icon.ico"
 IconPathV2 = "assets/icon/downloader_icon.png"
 IconPathV3 = "assets/icon/downloader.png"

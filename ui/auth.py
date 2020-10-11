@@ -62,7 +62,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", config.ApplicationName + " " + config.ApplicationVersion + " " + config.ApplicationBranch))
+        MainWindow.setWindowTitle(_translate("MainWindow", config.ApplicationFullName))
         self.lineEdit.setPlaceholderText(_translate("MainWindow", "Логин"))
         self.lineEdit_2.setPlaceholderText(_translate("MainWindow", "Пароль"))
         self.pushButton.setText(_translate("MainWindow", "Войти"))

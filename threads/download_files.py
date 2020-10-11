@@ -30,11 +30,9 @@ class Downloads_file(QThread):
             self.completed = 0
 
             for item in self.downloads_list:
-                msg = "Всего аудиозаписей: " + str(self.count_track) + \
-                      " Выбрано: " + str(self.selected_audios) + \
-                      " Загружено: " + str(self.completed)
+                msg = f"Всего аудиозаписей: {str(self.count_track)} Выбрано: {str(self.selected_audios)} Загружено: {str(self.completed)}"
 
-                filename = self.PATH + "/" + self.data[item].get_filename()
+                filename = f"{self.PATH}/{self.data[item].get_filename()}"
 
                 if (self.data[item].url == ""):
                     if (self.data[item].content_restricted):
@@ -53,7 +51,7 @@ class Downloads_file(QThread):
                     self.loading_audio.emit(str(self.data[item]))
                     
                     utils.downloads_files_in_wget(
-                        self.data[item].url, 
+                        self.data[item].get_url(), 
                         filename, 
                         self.update_progress
                     )
