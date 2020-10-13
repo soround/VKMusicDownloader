@@ -106,6 +106,7 @@ class VKLightOauth:
                 params=self.url_param, 
                 headers=headers, 
                 timeout=10
+                # verify=False
             ).json()
 
         except Exception as e:
@@ -155,6 +156,7 @@ class VKLight:
                 params=self.url_param, 
                 headers=headers, 
                 timeout=10
+                # verify=False
             ).json()
 
         except Exception as e:

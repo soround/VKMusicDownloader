@@ -101,12 +101,14 @@ def get_mp3_url(url):
 
     if url.startswith('https://ps'):
         re_url = re.compile(
-            r'(https:\/\/.+)\/.+?\/audios\/(.+?)\/index\.m3u8\?extra=(.+)'
+            r"(https:\/\/.+)\/.+?\/audios\/(.+?)\/index\.m3u8\?extra=(.+)"
         )
+        match = re_url.findall(url)[0]
+        return f'{match[0]}/audios/{match[1]}.mp3?extra={match[2]}'
     else: 
         re_url = re.compile(
             r'(https:\/\/.+)\/.+?\/(.+?)\/index\.m3u8\?extra=(.+)'
-        ) 
+        )
+        match = re_url.findall(url)[0]
+        return f'{match[0]}/{match[1]}.mp3?extra={match[2]}'
     
-    match = re_url.findall(url)[0]
-    return f'{match[0]}/{match[1]}.mp3?extra={match[2]}'
