@@ -10,7 +10,7 @@ host = "api.vk.me"
 host_oauth = "oauth.vk.com"
 proxyHost = "vk-api-proxy.xtrafrancyz.net"
 proxyOauthHost = "vk-oauth-proxy.xtrafrancyz.net"
-apiVersion = "5.124"
+apiVersion = "5.89"
 
 headers = { 
     'user-agent': get_user_agent(True),
