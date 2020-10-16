@@ -88,27 +88,25 @@ class VKLightOauth:
         self.host = param['host'] if self.__param.get("host", '') else self.host
         self.baseURL = f"https://{self.host}/token/"
         
-        self.apiVersion = self.__param.get("v", param) or apiVersion
-        self.url_param = dict(v=self.apiVersion)
+        self.apiVersion = self.__param.get("v") or apiVersion
+        self.url_param = {'v': self.apiVersion}
         
         self.applcation_name = self.__param.get('application_name', 'android')
-        
-        self.oauth_param = {
+        self.oauth_data = {
             **self.oauth_param, 
             **clients_credential.get(self.applcation_name)
         }
 
-    def go(self) -> dict: 
+    def go(self) -> dict:
         try:
             resp = requests.post(
                 self.baseURL,
-                data=self.oauth_param,
                 params=self.url_param, 
+                data=self.oauth_data,
                 headers=headers, 
                 timeout=10
                 # verify=False
             ).json()
-
         except Exception as e:
             raise e
         

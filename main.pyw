@@ -381,7 +381,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         elif id_restrict == 2:
             message = f"Аудиозапись: {song_name} недоступна в вашем регионе по решению правообладателя"
         elif id_restrict == 5:
-            message = f"Доступ к аудиозаписи: {song_name} скоро будет открыт"
+            message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт.\n\
+            Вы сможете её послушать после официального релиза"
         
         QMessageBox.warning(self, "Внимание", message)
 
