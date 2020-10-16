@@ -85,6 +85,9 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                         r = self.oauth.go()
                 else:
                     raise e
+            
+            except Exception as e:
+                raise e
 
             self.statusBar().showMessage('Done!')
 
