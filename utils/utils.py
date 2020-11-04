@@ -89,6 +89,20 @@ def downloads_files_in_wget(url, filename, progress):
     wget.download(url, filename, bar=progress)
 
 
+def speed(downloaded_time, bytesIn):
+    try:
+        markSpeed = 'MB/s'
+        result = ((bytesIn / 2048 ) / downloaded_time)
+        if result > 1024:
+            result = result / 1024
+        else:
+            markSpeed = 'KB/s'
+        return f"{round(result, 2)} {markSpeed}"
+
+    except ZeroDivisionError:
+        return f"..."
+
+
 def get_user_agent(usage_application_name):
     if usage_application_name:
         return f'VKAndroidApp/6.13.1-6127 (Android 11; SDK 30; arm64-v8a; {ApplicationName} {ApplicationVersion}; ru; 1920x1080)'

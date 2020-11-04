@@ -22,5 +22,5 @@ class Audio:
     def get_url(self):
         return get_mp3_url(self.url)
 
-    def __str__(self):
+    def __repr__(self):
         return self.song_name

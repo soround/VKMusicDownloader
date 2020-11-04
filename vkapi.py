@@ -192,7 +192,7 @@ class VKLightError(Exception):
         """
         self.message, self.error_code = message, error_code
 
-    def __str__(self):
+    def __repr__(self):
         return "VKLightError {}: {}".format(self.error_code, self.message)
 
 
@@ -204,5 +204,6 @@ class VKLightOauthError(Exception):
 
         self.__dict__.update(response)
 
-    def __str__(self):
+    def __repr__(self):
         return "VKLightOauthError: ({}) {}".format(self.error, self.error_description)
+        

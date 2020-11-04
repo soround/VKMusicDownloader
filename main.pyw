@@ -15,7 +15,7 @@ from ui import mainwindow
 
 from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
 
-from threads import Downloads_file, NetworkInfo
+from threads import Downloads_file, NetworkInfo, LoadMusic
 
 from PyQt5.QtWidgets import QWidget, QApplication, QMessageBox, QFileDialog, QInputDialog
 from PyQt5 import QtCore, QtWidgets
@@ -103,30 +103,36 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
             self.statusBar().showMessage('Login failed :(')
             QMessageBox.critical(self, "F*CK", str(e))
 
+        else:
 
-        access_token = r['access_token']
-        refresh_token = ""
+            access_token = r['access_token']
+            refresh_token = ""
+            user_id = r['user_id'] or ''
 
-        api = VKLight(dict(
-                access_token=access_token,
-                proxy=self.action.isChecked()
-            )
-        )
-
-        if not api.is_usage_domain_me():
-            from vkapi import receipt
-            self.statusBar().showMessage('Getting refresh_token')
-            refresh_token = api.call("auth.refreshToken",
-                dict(access_token=access_token, receipt=receipt)
+            api = VKLight(dict(
+                    access_token=access_token,
+                    proxy=self.action.isChecked()
+                )
             )
 
-        DATA = {'access_token': access_token, 'token': refresh_token}
-        utils.save_json("DATA", DATA)
+            if not api.is_usage_domain_me():
+                from vkapi import receipt
+                self.statusBar().showMessage('Getting refresh_token')
+                refresh_token = api.call("auth.refreshToken",
+                    dict(access_token=access_token, receipt=receipt)
+                )
 
-        #Запуск главного окна
-        self.window = MainWindow()
-        self.hide()
-        self.window.show()
+            DATA = {
+                'access_token': access_token, 
+                'token': refresh_token, 
+                'user_id': user_id
+            }
+            utils.save_json("DATA", DATA)
+            
+            #Запуск главного окна
+            self.window = MainWindow()
+            self.hide()
+            self.window.show()
 
 
 # Техническая информация
@@ -198,13 +204,14 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
         self.api = VKLight(dict())
         self.data = None
+        self.lm = None
         self.th = None
         self.is_loaded = False
         self.getSelected = []
         self.downloads_list = []
         self.PATH = ""
-
         self.count_track = 0
+        self.user_id = None
 
 
     def LoadsListMusic(self):
@@ -215,7 +222,11 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 data_token = json.loads(data_json.read())
                 access_token = data_token["access_token"]
                 refresh_token = data_token["token"]
-            
+                try:
+                    self.user_id = data_token.get('user_id', None)
+                except Exception:
+                    self.user_id = None
+
             self.api = VKLight(dict(
                     access_token=access_token,
                     proxy=self.action_5.isChecked()
@@ -232,52 +243,22 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 self.api.access_token = refresh_token
                 utils.save_json('DATA', dict(
                         access_token=access_token,
-                        refresh_token=refresh_token
+                        token=refresh_token,
+                        user_id=self.user_id
                     )
                 )
 
-            self.api_data = self.api.call("audio.get")['response']
-            self.count_track = self.api_data['count']
             
-            from models import Audio
-            self.data = [Audio(item) for item in self.api_data['items']]
-
-            if not (config.NoSaveToFile): utils.save_json('response.json', self.api_data)
-            del self.api_data
+            self.lm = LoadMusic(self.api, self.user_id)
             
-            QtWidgets.QTreeWidget.clear(self.treeWidget)
-            
-            for i, count in enumerate(self.data, 1):
+            self.lm.music.connect(self.fill_table)
+            self.lm.error.connect(self.show_error)
+            self.lm.count_tracks.connect(self.set_text)
 
-                test = QtWidgets.QTreeWidgetItem(self.treeWidget)
-
-                test.setText(0, str(i))
-                test.setText(1, count.artist)
-                test.setText(2, count.title)
-                test.setText(3, utils.time_duration(count.duration))
-                test.setText(4, utils.unix_time_stamp_convert(count.date))
-
-                if (count.is_hq):
-                    if (count.is_explicit):
-                        test.setText(5, "HQ (E)")
-                    else:
-                        test.setText(5, "HQ")
-                else:
-                    if (count.is_explicit):
-                        test.setText(5, "E")
-                
-                if (count.url == ""):
-                    test.setText(6, "Недоступно")
-
-            self.label.setText(
-                f"Всего аудиозаписей: {str(self.count_track) }"+ 
-                f" Выбрано: {0}"+ 
-                f" Загружено: {0}"
-            )
-
+            self.lm.start()
             self.is_loaded = True
 
-        except (VKLightError, Exception )as ex:
+        except (Exception, VKLightError )as ex:
             QMessageBox.critical(self, "F*CK", str(ex))
 
 
@@ -299,7 +280,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     self, "Информация", "Ничего не выбрано."
                 )
 
-
             if started:
 
                 self.PATH = utils.get_path(self, 
@@ -317,7 +297,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 )
 
                 self.th.progress_range.connect(self.progress)
-                self.th.progress.connect(self.progressBar.setValue)
+                self.th.progress.connect(self.progress_set_value)
                 self.th.loading_audio.connect(self.loading_audio)
                 self.th.message.connect(self.label.setText)
                 self.th.unavailable_audio.connect(self.unavailable_audio)
@@ -343,6 +323,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.pushButton.setChecked(False)
         self.progressBar.setValue(0)
         self.progressBar.setRange(0, 100)
+        self.progressBar.setFormat("%p% (%v/%m)")
         self.label_3.setText("Загружается: ")
         self.label.setText(
             f"Всего аудиозаписей: {str(self.count_track) }"+ 
@@ -350,6 +331,48 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             f" Загружено: {0}"
         )
 
+
+    @pyqtSlot(list)
+    def fill_table(self, data):
+        self.data = data
+        QtWidgets.QTreeWidget.clear(self.treeWidget)
+            
+        for i, count in enumerate(data, 1):
+
+            test = QtWidgets.QTreeWidgetItem(self.treeWidget)
+
+            test.setText(0, str(i))
+            test.setText(1, count.artist)
+            test.setText(2, count.title)
+            test.setText(3, utils.time_duration(count.duration))
+            test.setText(4, utils.unix_time_stamp_convert(count.date))
+
+            if (count.is_hq):
+                if (count.is_explicit):
+                    test.setText(5, "HQ (E)")
+                else:
+                    test.setText(5, "HQ")
+            else:
+                if (count.is_explicit):
+                    test.setText(5, "E")
+            
+            if (count.url == ""):
+                test.setText(6, "Недоступно")
+
+    @pyqtSlot(str)
+    def show_error(self, error):
+        QMessageBox.critical(self, 
+            "F*CK", f"{error}"
+        )
+
+    @pyqtSlot(int)
+    def set_text(self, count_track):
+        self.count_track = count_track
+        self.label.setText(
+                f"Всего аудиозаписей: {str(self.count_track) }"+ 
+                f" Выбрано: {0}"+ 
+                f" Загружено: {0}"
+        )
 
     @pyqtSlot()
     def finished_loader(self):
@@ -365,10 +388,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(str)
     def loading_audio(self, song_name):
-        if len(song_name) > 115:
-            self.label_3.setText(f"Загружается: {song_name[0:100]}...")
-        else:
-            self.label_3.setText(f"Загружается: {song_name}")
+        self.label_3.setText(f"Загружается: {song_name[0:100]}")
 
     @pyqtSlot(str)
     def unavailable_audio(self, song_name):
@@ -384,14 +404,19 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         elif id_restrict == 2:
             message = f"Аудиозапись: {song_name} недоступна в вашем регионе по решению правообладателя"
         elif id_restrict == 5:
-            message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт.\n\
-            Вы сможете её послушать после официального релиза"
+            message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт."+\
+            "\nВы сможете её послушать после официального релиза"
         
         QMessageBox.warning(self, "Внимание", message)
 
     @pyqtSlot(int)
     def progress(self, range):
-        self.progressBar.setRange(0, range)
+        self.progressBar.setFormat("%p% ( %v KB / %m KB )")
+        self.progressBar.setRange(0, int(range / 1024))
+
+    @pyqtSlot(int)
+    def progress_set_value(self, value):
+        self.progressBar.setValue(int(value / 1024))
 
 
     def AboutMessage(self):
