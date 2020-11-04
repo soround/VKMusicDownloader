@@ -37,7 +37,12 @@ class LoadMusic(QThread):
             stat.setuserid(user_id=self.user_id)
             stat.send()
 
-        except (Exception, VKLightError) as e:
+        except VKLightError as e:
+            self.error.emit(repr(e))
+            self.music.emit([])
+            self.count_tracks.emit(0)
+
+        except Exception as e:
             self.error.emit(str(e))
             self.music.emit([])
             self.count_tracks.emit(0)

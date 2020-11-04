@@ -5,7 +5,7 @@ from os.path import abspath
 
 
 ApplicationName = "VKMusicDownloader"
-ApplicationVersion = "1.1.10"
+ApplicationVersion = "1.1.11"
 ApplicationBranch = "Public Release"
 Description =  "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
