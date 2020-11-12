@@ -10,7 +10,6 @@ from config import NoSaveToFile
 
 
 class LoadMusic(QThread):
-
     music = pyqtSignal(list)
     error = pyqtSignal(str)
     count_tracks = pyqtSignal(int)
@@ -21,28 +20,23 @@ class LoadMusic(QThread):
         self.user_id = user_id
         self.audios = None
 
-    
     def run(self):
         try:
 
-            self.audios = self.api.call('audio.get')            
+            self.audios = self.api.call('audio.get')
             self.count_tracks.emit(self.audios['response']['count'])
 
             data = [Audio(item) for item in self.audios['response']['items']]
 
-            if not NoSaveToFile: save_json('response.json', self.audios)
+            if not NoSaveToFile:
+                save_json('response.json', self.audios)
 
             self.music.emit(data)
 
-            stat.setuserid(user_id=self.user_id)
+            stat.set_userid(user_id=self.user_id)
             stat.send()
 
-        except VKLightError as e:
-            self.error.emit(repr(e))
-            self.music.emit([])
-            self.count_tracks.emit(0)
-
-        except Exception as e:
+        except (VKLightError, Exception) as e:
             self.error.emit(str(e))
             self.music.emit([])
             self.count_tracks.emit(0)

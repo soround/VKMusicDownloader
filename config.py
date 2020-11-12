@@ -7,7 +7,7 @@ from os.path import abspath
 ApplicationName = "VKMusicDownloader"
 ApplicationVersion = "1.1.11"
 ApplicationBranch = "Public Release"
-Description =  "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
+Description = "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
 ApplicationFullName = f"{ApplicationName} {ApplicationVersion} {ApplicationBranch}"
 
@@ -16,7 +16,6 @@ IconPathV2 = abspath("assets/icon/downloader_icon.png")
 IconPathV3 = abspath("assets/icon/downloader.png")
 
 License = "https://github.com/keyzt/VKMusicDownloader/blob/master/LICENSE"
-SourceСode = "https://github.com/keyzt/VKMusicDownloader"
+SourceCode = "https://github.com/keyzt/VKMusicDownloader"
 
 NoSaveToFile = True
-

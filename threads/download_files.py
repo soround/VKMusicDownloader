@@ -6,8 +6,7 @@ import utils
 from PyQt5.QtCore import QThread, pyqtSignal
 
 
-class Downloads_file(QThread):
-
+class DownloadsFile(QThread):
     finished = pyqtSignal()
     abort_download = pyqtSignal(str)
     progress_range = pyqtSignal(int)
@@ -17,7 +16,7 @@ class Downloads_file(QThread):
     unavailable_audio = pyqtSignal(str)
     content_restricted = pyqtSignal(int, str)
 
-    def __init__(self, count_track, PATH, downloads_list=None, data=None):
+    def __init__(self, count_track, path, downloads_list=None, data=None):
         super().__init__()
         self.count_track = count_track
         self.downloads_list = downloads_list
@@ -26,10 +25,10 @@ class Downloads_file(QThread):
         self.current_track = ''
         self.speed = ''
         self.time_started = 0
-        self.msg = f"Всего аудиозаписей: {str(self.count_track)}  Выбрано: {str(self.selected_audios)}  Загружено: {str(self.completed)}  Скорость: {self.speed}"
+        self.msg = f"Всего аудиозаписей: {str(self.count_track)}' \
+        f 'Выбрано: {str(self.selected_audios)}  Загружено: {str(self.completed)}  Скорость: {self.speed}"
         self.data = data
-        self.PATH = PATH
-
+        self.PATH = path
 
     def run(self):
         try:
@@ -40,30 +39,30 @@ class Downloads_file(QThread):
                 filename = f"{self.PATH}/{self.data[item].get_filename()}"
                 self.time_started = int(time.time())
 
-                if (self.data[item].url == ""):
-                    if (self.data[item].content_restricted):
+                if self.data[item].url == "":
+                    if self.data[item].content_restricted:
                         self.content_restricted.emit(
                             int(
                                 self.data[item].content_restricted
-                            ),  self.current_track
+                            ), self.current_track
                         )
 
                     else:
                         self.unavailable_audio.emit(
                             self.current_track
                         )
-                    
+
                     self.time_started = 0
                 else:
                     self.message.emit(self.msg)
                     self.loading_audio.emit(self.current_track)
-                    
+
                     utils.downloads_files_in_wget(
-                        self.data[item].get_url(), 
-                        filename, 
+                        self.data[item].get_url(),
+                        filename,
                         self.update_progress
                     )
-                    
+
                     self.completed += 1
                     self.time_started = 0
 
@@ -74,12 +73,12 @@ class Downloads_file(QThread):
             self.abort_download.emit(str(e))
 
     # Magic. Do not touch.
-    def update_progress(self, current, total, width=80):
+    def update_progress(self, current, total, wight=80):
         self.speed = utils.speed(
-            int(time.time() - self.time_started), 
-            bytesIn=current
+            int(time.time() - self.time_started),
+            bytes_in=current
         )
-        self.msg = f"Всего аудиозаписей: {str(self.count_track)}  Выбрано: {str(self.selected_audios)}  Загружено: {str(self.completed)}  Скорость: {self.speed}"
+        self.msg = f"Всего аудиозаписей: {str(self.count_track)}  Выбрано: {str(self.selected_audios)}  Загружено: {str(self.completed)}  Скорость: {self.speed} "
         self.message.emit(self.msg)
         self.progress_range.emit(total)
         self.progress.emit(current)

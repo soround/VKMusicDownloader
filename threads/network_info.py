@@ -19,17 +19,18 @@ class NetworkInfo(QThread):
         self.host_api = host_api
         self.host_oauth = host_oauth
 
-
     def run(self):
         try:
             self.internal_ip.emit(utils.get_internal_ip())
             data = utils.get_network_info()
             loc = f"{data['country']}, {data['region']}, {data['city']}"
             self.external_ip.emit(data['ip'])
-            if 'hostname' in data: self.hostname.emit(data['hostname'])
+            if 'hostname' in data:
+                self.hostname.emit(data['hostname'])
             self.location.emit(loc)
 
-        except Exception:
+        except Exception as e:
+            print(e)
             self.internal_ip.emit(utils.get_internal_ip())
             self.external_ip.emit(None)
             self.hostname.emit(None)
@@ -49,7 +50,5 @@ class NetworkInfo(QThread):
             status = f"Хост: [{self.host_oauth}] - Недоступен"
             self.oauth.emit(status)
 
-
     def __del__(self):
         print("Never Say Goodbye")
-

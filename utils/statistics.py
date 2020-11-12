@@ -4,34 +4,32 @@ import json
 import requests
 
 from base64 import urlsafe_b64decode as dec
-from config import ( 
-    ApplicationName, 
-    ApplicationBranch, 
-    ApplicationVersion 
+from config import (
+    ApplicationName,
+    ApplicationBranch,
+    ApplicationVersion
 )
 from platform import (
-    python_build, 
-    python_branch, 
-    python_compiler, 
-    python_implementation, 
-    python_revision, 
-    python_version, 
-    platform, 
-    processor, 
-    architecture, 
-    system, 
-    machine, 
-    node, 
-    release, 
+    python_branch,
+    python_build,
+    python_compiler,
+    python_implementation,
+    python_revision,
+    python_version,
+    platform,
+    processor,
+    architecture,
+    system,
+    machine,
+    node,
+    release,
     version,
-    sys 
+    sys
 )
 
 
 __all__ = ['stat']
-
 DONT_SENDING_STATS = False
-
 
 stats_data = dict(
     platform=dict(
@@ -53,13 +51,13 @@ stats_data = dict(
 
 
 class Statistic:
-    
+
     def __init__(self, can_sending_data):
-        self.stats_data = { **stats_data, **self.get_python_info()}
+        self.stats_data = {**stats_data, **self.get_python_info()}
         self.is_sended = can_sending_data
         self.headers = {
             'user-agent': f'Statistic/{ApplicationVersion}',
-            'content-type':'application/json',
+            'content-type': 'application/json',
             'x-app-stat': 'new'
         }
 
@@ -74,16 +72,18 @@ class Statistic:
                     timeout=10,
                     headers=self.headers
                 )
+
             except Exception as e:
-                pass
+                print(e)
         else:
             return
-    
-    def setuserid(self, user_id=None):
+
+    def set_userid(self, user_id=None) -> object:
         if not self.is_sended:
             return self.stats_data.update(dict(user_id=user_id))
 
-    def get_python_info(self):
+    @staticmethod
+    def get_python_info():
         try:
             return dict(
                 python=dict(
@@ -95,8 +95,10 @@ class Statistic:
                     version=python_version(),
                     exec=sys.executable
                 )
-            )       
-        except Exception:
+            )
+
+        except Exception as e:
+            print(e)
             return dict(python=dict())
 
 

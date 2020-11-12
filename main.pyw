@@ -15,13 +15,12 @@ from ui import mainwindow
 
 from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
 
-from threads import Downloads_file, NetworkInfo, LoadMusic
+from threads import DownloadsFile, NetworkInfo, LoadMusic
 
 from PyQt5.QtWidgets import QWidget, QApplication, QMessageBox, QFileDialog, QInputDialog
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, Qt
-
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -31,6 +30,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
+        self.window = None
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
@@ -42,11 +42,10 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
 
         self.oauth = VKLightOauth(dict())
 
-
     def go(self):
-            
         login = self.lineEdit.text()
         password = self.lineEdit_2.text()
+        r = None
 
         self.statusBar().showMessage('Loading...')
 
@@ -61,15 +60,15 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         try:
             try:
                 r = self.oauth.go()
-            
+
             except VKLightOauthError as e:
                 if 'need_validation' in e.error:
                     if 'ban_info' in dir(e):
                         return QMessageBox.critical(self, "F*CK", str(e))
 
                     code, ok = QInputDialog.getText(
-                        self, 
-                        "Подтвердите номер", 
+                        self,
+                        "Подтвердите номер",
                         "Мы отправили SMS с кодом на номер"
                     )
 
@@ -85,15 +84,14 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                         r = self.oauth.go()
                 else:
                     raise e
-            
+
             except Exception as e:
                 raise e
 
             self.statusBar().showMessage('Done!')
 
-        
         except VKLightOauthError as e:
-            
+
             if 'need_captcha' in e.error:
                 return QMessageBox.critical(self, 'F*CK', 'F*CKING CAPTHA')
             else:
@@ -118,18 +116,22 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
             if not api.is_usage_domain_me():
                 from vkapi import receipt
                 self.statusBar().showMessage('Getting refresh_token')
-                refresh_token = api.call("auth.refreshToken",
-                    dict(access_token=access_token, receipt=receipt)
+                refresh_token = api.call(
+                    "auth.refreshToken",
+                    dict(
+                        access_token=access_token,
+                        receipt=receipt
+                    )
                 )
 
-            DATA = {
-                'access_token': access_token, 
-                'token': refresh_token, 
+            data = {
+                'access_token': access_token,
+                'token': refresh_token,
                 'user_id': user_id
             }
-            utils.save_json("DATA", DATA)
-            
-            #Запуск главного окна
+            utils.save_json("DATA", data)
+
+            # Запуск главного окна
             self.window = MainWindow()
             self.hide()
             self.window.show()
@@ -161,7 +163,6 @@ class TechInfo(QWidget, tech_info.Ui_Form):
         self.th.oauth.connect(self.label_6.setText)
 
         self.th.start()
- 
 
     @pyqtSlot(str)
     def set_internal_ip(self, ip):
@@ -174,31 +175,33 @@ class TechInfo(QWidget, tech_info.Ui_Form):
     @pyqtSlot(str)
     def set_hostname(self, hostname):
         self.label_4.setText("Hostname: " + (hostname or "Недоступно"))
-        
+
     @pyqtSlot(str)
     def set_location(self, location):
         self.label_3.setText("Location: " + (location or "Недоступно"))
-
 
     def exit(self): self.close()
 
 
 # Главное окно приложения         
 class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
-    
+
     def __init__(self):
         super().__init__()
+        self.auth_window = None
+        self.tech_info_window = None
+        self.completed = 0
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
         self.setWindowFlags(QtCore.Qt.Window)
-        
-        self.pushButton_2.clicked.connect(self.LoadsListMusic)
-        self.pushButton.clicked.connect(self.Downloads)
+
+        self.pushButton_2.clicked.connect(self.loads_list_music)
+        self.pushButton.clicked.connect(self.download)
         self.pushButton.setCheckable(True)
-        self.action.triggered.connect(self.AboutMessage)
+        self.action.triggered.connect(self.about_message)
         self.action_2.setShortcut("Ctrl+Q")
-        self.action_2.triggered.connect(self.Logout)
-        self.action_4.triggered.connect(self.TechInformation)
+        self.action_2.triggered.connect(self.logout)
+        self.action_4.triggered.connect(self.tech_information)
         self.action_4.setShortcut("Ctrl+T")
         self.progressBar.setFormat("%p% (%v/%m)")
 
@@ -213,18 +216,17 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.count_track = 0
         self.user_id = None
 
-
-    def LoadsListMusic(self):
+    def loads_list_music(self):
         try:
             self.pushButton.setEnabled(True)
-            
+
             with open('DATA', encoding='utf-8') as data_json:
                 data_token = json.loads(data_json.read())
                 access_token = data_token["access_token"]
                 refresh_token = data_token["token"]
                 try:
                     self.user_id = data_token.get('user_id', None)
-                except Exception:
+                except ValueError:
                     self.user_id = None
 
             self.api = VKLight(dict(
@@ -236,8 +238,12 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             if not self.api.is_usage_domain_me():
                 from vkapi import receipt
                 if refresh_token == "":
-                    refresh_token = self.api.call("auth.refreshToken",
-                        dict(access_token=access_token, receipt=receipt)
+                    refresh_token = self.api.call(
+                        "auth.refreshToken",
+                        dict(
+                            access_token=access_token,
+                            receipt=receipt
+                        )
                     )['response']['token']
 
                 self.api.access_token = refresh_token
@@ -248,9 +254,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     )
                 )
 
-            
             self.lm = LoadMusic(self.api, self.user_id)
-            
+
             self.lm.music.connect(self.fill_table)
             self.lm.error.connect(self.show_error)
             self.lm.count_tracks.connect(self.set_text)
@@ -258,23 +263,22 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.lm.start()
             self.is_loaded = True
 
-        except (Exception, VKLightError )as ex:
+        except (Exception, VKLightError)as ex:
             QMessageBox.critical(self, "F*CK", str(ex))
 
-
-    def Downloads(self, started):
+    def download(self, started):
         try:
             if not self.is_loaded:
                 self.pushButton.setChecked(False)
                 return QMessageBox.information(
-                    self, 
-                    "Информация", 
+                    self,
+                    "Информация",
                     "Вы не загрузили список аудиозаписей"
                 )
 
-            self.downloads_list = [int(i.text(0)) - 1  for i in self.treeWidget.selectedItems()]
+            self.downloads_list = [int(i.text(0)) - 1 for i in self.treeWidget.selectedItems()]
 
-            if (len(self.downloads_list) == 0):
+            if len(self.downloads_list) == 0:
                 self.pushButton.setChecked(False)
                 return QMessageBox.information(
                     self, "Информация", "Ничего не выбрано."
@@ -282,16 +286,15 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
             if started:
 
-                self.PATH = utils.get_path(self, 
-                    self.action_7.isChecked(), QFileDialog
-                )
+                self.PATH = utils.get_path(self,
+                                           self.action_7.isChecked(), QFileDialog
+                                           )
                 self.label_2.setText("Путь для скачивания: " + self.PATH)
-                self.completed = 0
                 self.pushButton.setText("Остановить")
-                
-                self.th = Downloads_file(
+
+                self.th = DownloadsFile(
                     self.count_track,
-                    self.PATH, 
+                    self.PATH,
                     self.downloads_list,
                     self.data
                 )
@@ -316,7 +319,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             QMessageBox.critical(self, "F*CK", str(e))
             self.pushButton.setText("Скачать")
 
-
     def set_ui_default(self):
         self.downloads_list = []
         self.pushButton.setText("Скачать")
@@ -326,17 +328,16 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.progressBar.setFormat("%p% (%v/%m)")
         self.label_3.setText("Загружается: ")
         self.label.setText(
-            f"Всего аудиозаписей: {str(self.count_track) }"+ 
-            f" Выбрано: {0}"+ 
+            f"Всего аудиозаписей: {str(self.count_track)}" +
+            f" Выбрано: {0}" +
             f" Загружено: {0}"
         )
-
 
     @pyqtSlot(list)
     def fill_table(self, data):
         self.data = data
         QtWidgets.QTreeWidget.clear(self.treeWidget)
-            
+
         for i, count in enumerate(data, 1):
 
             test = QtWidgets.QTreeWidgetItem(self.treeWidget)
@@ -347,31 +348,31 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             test.setText(3, utils.time_duration(count.duration))
             test.setText(4, utils.unix_time_stamp_convert(count.date))
 
-            if (count.is_hq):
-                if (count.is_explicit):
+            if count.is_hq:
+                if count.is_explicit:
                     test.setText(5, "HQ (E)")
                 else:
                     test.setText(5, "HQ")
             else:
-                if (count.is_explicit):
+                if count.is_explicit:
                     test.setText(5, "E")
-            
-            if (count.url == ""):
+
+            if count.url == "":
                 test.setText(6, "Недоступно")
 
     @pyqtSlot(str)
     def show_error(self, error):
-        QMessageBox.critical(self, 
-            "F*CK", f"{error}"
-        )
+        QMessageBox.critical(self,
+                             "F*CK", f"{error}"
+                             )
 
     @pyqtSlot(int)
     def set_text(self, count_track):
         self.count_track = count_track
         self.label.setText(
-                f"Всего аудиозаписей: {str(self.count_track) }"+ 
-                f" Выбрано: {0}"+ 
-                f" Загружено: {0}"
+            f"Всего аудиозаписей: {str(self.count_track)}" +
+            f" Выбрано: {0}" +
+            f" Загружено: {0}"
         )
 
     @pyqtSlot()
@@ -381,9 +382,9 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(str)
     def aborted_download(self, err_msg):
-        QMessageBox.critical(self, 
-            "F*CK", f"Загрузка прервана. Причина: {err_msg}"
-        )
+        QMessageBox.critical(self,
+                             "F*CK", f"Загрузка прервана. Причина: {err_msg}"
+                             )
         self.set_ui_default()
 
     @pyqtSlot(str)
@@ -392,34 +393,34 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(str)
     def unavailable_audio(self, song_name):
-        QMessageBox.warning(self, 
-            "Внимание",
-            f"Аудиозапись: {song_name} недоступна в вашем регионе"
-        )
+        QMessageBox.warning(self,
+                            "Внимание",
+                            f"Аудиозапись: {song_name} недоступна в вашем регионе"
+                            )
 
     @pyqtSlot(int, str)
-    def content_restricted(self, id_restrict,  song_name):
+    def content_restricted(self, id_restrict, song_name):
+        message = ""
         if id_restrict == 1:
             message = f"Аудиозапись: {song_name} недоступна по решению правообладателя"
         elif id_restrict == 2:
             message = f"Аудиозапись: {song_name} недоступна в вашем регионе по решению правообладателя"
         elif id_restrict == 5:
-            message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт."+\
-            "\nВы сможете её послушать после официального релиза"
-        
+            message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт." + \
+                      "\nВы сможете её послушать после официального релиза"
+
         QMessageBox.warning(self, "Внимание", message)
 
     @pyqtSlot(int)
-    def progress(self, range):
+    def progress(self, _range):
         self.progressBar.setFormat("%p% ( %v KB / %m KB )")
-        self.progressBar.setRange(0, int(range / 1024))
+        self.progressBar.setRange(0, int(_range / 1024))
 
     @pyqtSlot(int)
     def progress_set_value(self, value):
         self.progressBar.setValue(int(value / 1024))
 
-
-    def AboutMessage(self):
+    def about_message(self):
         QMessageBox.about(
             self, "О программе",
             "<b>" + config.ApplicationName
@@ -428,33 +429,31 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             + "<br><b>Стадия: </b> "
             + config.ApplicationBranch
             + "<br><br>Данное ПО распространяется по лицензии "
-            + "<a href=" + config.License +">MIT</a>, исходный код доступен"
-            + " на <a href=" + config.SourceСode +">GitHub</a>"
+            + "<a href=" + config.License + ">MIT</a>, исходный код доступен"
+            + " на <a href=" + config.SourceCode + ">GitHub</a>"
         )
 
-
-    def TechInformation(self):
+    def tech_information(self):
         self.tech_info_window = TechInfo(
             VKLight(dict(proxy=self.action_5.isChecked())).baseURL,
             VKLightOauth(dict(proxy=self.action_5.isChecked())).baseURL
         )
 
-
-    def Logout(self):
+    def logout(self):
         reply = QMessageBox.question(
-            self, 
-            "Выход из аккаунта","Вы точно хотите выйти из аккаунта?", 
-            QMessageBox.Yes | QMessageBox.No, 
+            self,
+            "Выход из аккаунта", "Вы точно хотите выйти из аккаунта?",
+            QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
 
         if reply == QMessageBox.Yes:
-            if (utils.file_exists("DATA")):
+            if utils.file_exists("DATA"):
                 os.remove("DATA")
             else:
                 print("WTF?")
 
-            if (utils.file_exists("response.json")):
+            if utils.file_exists("response.json"):
                 os.remove("response.json")
 
             self.auth_window = Auth()
@@ -470,20 +469,20 @@ def start():
             sys.exit(
                 config.ApplicationFullName
             )
-        
+
         auth_file = "DATA"
-        
+
         app = QApplication(sys.argv)
         app.setWindowIcon(QIcon(config.IconPath))
         app.setApplicationName(config.ApplicationName)
         app.setApplicationVersion(config.ApplicationVersion)
         app.setStyle('Fusion')
 
-        if (utils.file_exists(auth_file)):
+        if utils.file_exists(auth_file):
             ex = MainWindow()
             ex.show()
             sys.exit(app.exec_())
-        
+
         else:
             ex = Auth()
             ex.show()
