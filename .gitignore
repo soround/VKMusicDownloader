@@ -1,6 +1,8 @@
 # Created by https://www.gitignore.io/api/qt,python
 # Edit at https://www.gitignore.io/?templates=qt,python
 
+.idea
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
