@@ -16,8 +16,8 @@ headers = {
     'x-vk-android-client': 'new'
 }
 
-receipt = "JSv5FBbXbY:APA91bF2K9B0eh61f2WaTZvm62GOHon3-vElmVq54ZOL5PHpFkIc85WQUxUH_wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ" \
-          "-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4 "
+receipt = "JSv5FBbXbY:APA91bF2K9B0eh61f2WaTZvm62GOHon3-vElmVq54ZOL5PHpFkIc85WQUxUH_" + \
+          "wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4 "
 
 # client_id и client_secret приложений
 clients_credential = {
