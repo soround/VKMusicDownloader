@@ -218,8 +218,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def loads_list_music(self):
         try:
-            self.pushButton.setEnabled(True)
-
             with open('DATA', encoding='utf-8') as data_json:
                 data_token = json.loads(data_json.read())
                 access_token = data_token["access_token"]
@@ -259,6 +257,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.lm.music.connect(self.fill_table)
             self.lm.error.connect(self.show_error)
             self.lm.count_tracks.connect(self.set_text)
+            self.lm.warning_message_count_audios.connect(self.show_warning)
+            self.lm.loaded.connect(self.pushButton_2.setEnabled)
 
             self.lm.start()
             self.is_loaded = True
@@ -362,9 +362,17 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(str)
     def show_error(self, error):
+        # self.pushButton_2.setEnabled(True)
         QMessageBox.critical(self,
                              "F*CK", f"{error}"
                              )
+
+    @pyqtSlot(str)
+    def show_warning(self, msg):
+        QMessageBox.warning(self,
+                            "Внимание",
+                            msg
+                            )
 
     @pyqtSlot(int)
     def set_text(self, count_track):
