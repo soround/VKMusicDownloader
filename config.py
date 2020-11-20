@@ -18,4 +18,4 @@ IconPathV3 = abspath("assets/icon/downloader.png")
 License = "https://github.com/keyzt/VKMusicDownloader/blob/master/LICENSE"
 SourceCode = "https://github.com/keyzt/VKMusicDownloader"
 
-NoSaveToFile = False
+NoSaveToFile = True
