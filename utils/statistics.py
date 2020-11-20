@@ -29,6 +29,7 @@ from platform import (
 
 
 __all__ = ['stat']
+
 DONT_SENDING_STATS = False
 
 stats_data = dict(
