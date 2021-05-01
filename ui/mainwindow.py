@@ -8,7 +8,7 @@
 
 
 import os
-import config
+from config import config
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):

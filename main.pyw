@@ -6,13 +6,13 @@ import sys
 import json
 import locale
 
-import config
 import utils
 
 from ui import auth
 from ui import tech_info
 from ui import mainwindow
 
+from config import config
 from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
 
 from threads import DownloadsFile, NetworkInfo, LoadMusic

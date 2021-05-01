@@ -1,14 +1,8 @@
-""""""
-
 import json
 import requests
 
 from base64 import urlsafe_b64decode as dec
-from config import (
-    ApplicationName,
-    ApplicationBranch,
-    ApplicationVersion
-)
+from config import config
 from platform import (
     python_branch,
     python_build,
@@ -29,9 +23,7 @@ from platform import (
 
 
 __all__ = ['stat']
-
-DONT_SENDING_STATS = False
-
+DONT_SENDING_STATS = not config.UseAnalytics
 stats_data = dict(
     platform=dict(
         platform=platform(),
@@ -44,9 +36,9 @@ stats_data = dict(
         version=version()
     ),
     app_meta=dict(
-        name=ApplicationName,
-        version=ApplicationVersion,
-        branch=ApplicationBranch
+        name=config.ApplicationName,
+        version=config.ApplicationVersion,
+        branch=config.ApplicationBranch
     )
 )
 
@@ -57,7 +49,7 @@ class Statistic:
         self.stats_data = {**stats_data, **self.get_python_info()}
         self.is_sended = can_sending_data
         self.headers = {
-            'user-agent': f'Statistic/{ApplicationVersion}',
+            'user-agent': f'Statistic/{config.ApplicationVersion}',
             'content-type': 'application/json',
             'x-app-stat': 'new'
         }

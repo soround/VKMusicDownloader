@@ -6,7 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-import config
+from config import config
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):

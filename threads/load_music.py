@@ -8,7 +8,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from vkapi import VKLightError
 from models import Audio
 from utils import save_json, stat
-from config import NoSaveToFile
+from config import config
 
 
 class LoadMusic(QThread):
@@ -46,7 +46,9 @@ class LoadMusic(QThread):
                                 "offset": self.COUNT_LOADING_AUDIO * i
                             }
                         )
-                        _data = [Audio(item) for item in self.audios['response']['items']]
+                        _data = [
+                            Audio(item) for item in self.audios['response']['items']
+                        ]
                         data = [*data, *_data]
                         self.music.emit(data)
 
@@ -62,7 +64,7 @@ class LoadMusic(QThread):
                 data = [Audio(item) for item in self.audios['response']['items']]
 
             
-            if not NoSaveToFile:
+            if not config.NoSaveToFile:
                 save_json('response.json', self.audios)
 
             self.music.emit(data)

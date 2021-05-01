@@ -10,7 +10,7 @@ import socket
 import requests
 import wget
 
-from config import ApplicationName, ApplicationVersion
+from config import config
 
 
 def fix_filename(filename) -> str:
@@ -106,7 +106,7 @@ def speed(downloaded_time, bytes_in) -> str:
 def get_user_agent(usage_application_name) -> str:
     if usage_application_name:
         return f'VKAndroidApp/6.17.1-6393 (Android 11; SDK 30; arm64-v8a;' \
-               f'{ApplicationName} {ApplicationVersion}; ru; 1920x1080)'
+               f'{config.ApplicationName} {config.ApplicationVersion}; ru; 1920x1080)'
     else:
         return 'VKAndroidApp/6.17.1-6393 (Android 11; SDK 30; arm64-v8a; Unknown; ru; 1920x1080)'
 
