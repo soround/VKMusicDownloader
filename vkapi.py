@@ -5,7 +5,7 @@
 import requests
 from utils import get_user_agent
 
-host = "api.vk.me"
+host = "api.vk.com"
 host_oauth = "oauth.vk.com"
 proxyHost = "vk-api-proxy.xtrafrancyz.net"
 proxyOauthHost = "vk-oauth-proxy.xtrafrancyz.net"
