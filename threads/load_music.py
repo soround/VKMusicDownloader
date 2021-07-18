@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from  math import ceil
 from time import sleep
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from vkapi import VKLightError
-from models import Audio
-from utils import save_json, stat
 from config import config
+from models import Audio
+from vkapi import VKLightError
+from utils import save_json, stat
 
 
 class LoadMusic(QThread):
@@ -38,7 +39,7 @@ class LoadMusic(QThread):
             
             if count_audios > self.COUNT_LOADING_AUDIO:
                 
-                count_calls = round(count_audios / self.COUNT_LOADING_AUDIO)
+                count_calls = ceil(count_audios / self.COUNT_LOADING_AUDIO)
 
                 for i in range(count_calls):
                     try:
