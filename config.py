@@ -14,7 +14,7 @@ class MetaSingleton(type):
 
 class Config(metaclass=MetaSingleton):
 	ApplicationName = "VKMusicDownloader"
-	ApplicationVersion = "1.1.12"
+	ApplicationVersion = "1.1.17"
 	ApplicationBranch = "Public Pre-Release"
 	Description = "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
@@ -24,8 +24,8 @@ class Config(metaclass=MetaSingleton):
 	IconPathV2 = abspath("assets/icon/downloader_icon.png")
 	IconPathV3 = abspath("assets/icon/downloader.png")
 
-	License = "https://github.com/keyzt/VKMusicDownloader/blob/master/LICENSE"
-	SourceCode = "https://github.com/keyzt/VKMusicDownloader"
+	License = "https://github.com/soround/VKMusicDownloader/blob/master/LICENSE"
+	SourceCode = "https://github.com/soround/VKMusicDownloader"
 
 	NoSaveToFile = True
 	UseAnalytics = True

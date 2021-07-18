@@ -17,7 +17,7 @@ headers = {
 }
 
 receipt = "JSv5FBbXbY:APA91bF2K9B0eh61f2WaTZvm62GOHon3-vElmVq54ZOL5PHpFkIc85WQUxUH_" + \
-          "wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4 "
+          "wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4"
 
 # client_id и client_secret приложений
 clients_credential = {
@@ -169,7 +169,8 @@ class VKLight:
             raise e
 
         if 'error' in resp:
-            raise VKLightError(resp['error']['error_code'], resp['error']['error_msg'])
+            error_code, error_msg = resp['error']['error_code'], resp['error']['error_msg']
+            raise VKLightError(error_code, error_msg)
 
         return resp
 

@@ -105,26 +105,14 @@ def speed(downloaded_time, bytes_in) -> str:
 
 def get_user_agent(usage_application_name) -> str:
     if usage_application_name:
-        return f'VKAndroidApp/6.17.1-6393 (Android 11; SDK 30; arm64-v8a;' \
+        return f'VKAndroidApp/6.45-8597 (Android 12; SDK 31; arm64-v8a;' \
                f'{config.ApplicationName} {config.ApplicationVersion}; ru; 1920x1080)'
     else:
-        return 'VKAndroidApp/6.17.1-6393 (Android 11; SDK 30; arm64-v8a; Unknown; ru; 1920x1080)'
+        return 'VKAndroidApp/6.45-8597 (Android 12; SDK 31; arm64-v8a; Unknown; ru; 1920x1080)'
 
 
-def get_mp3_url(url):
+def get_mp3_url(url) -> str:
     if '.mp3?' in url:
         return url
 
-    if url.startswith('https://ps'):
-        re_url = re.compile(
-            r"(https://.+)/.+?/audios/(.+?)/index\.m3u8\?extra=(.+)"
-        )
-        match = re_url.findall(url)[0]
-        return f'{match[0]}/audios/{match[1]}.mp3?extra={match[2]}'
-    else:
-        re_url = re.compile(
-            r'(https://.+)/.+?/(.+?)/index\.m3u8\?extra=(.+)'
-        )
-
-    match = re_url.findall(url)[0]
-    return f'{match[0]}/{match[1]}.mp3?extra={match[2]}'
+    return
