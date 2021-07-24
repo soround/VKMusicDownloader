@@ -1,12 +1,15 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import argparse
 import os
 import sys
 import json
 import locale
 
 import utils
+
+from datetime import datetime
 
 from ui import auth
 from ui import tech_info
@@ -471,12 +474,94 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             pass
 
 
+class CommandLineOptions():
+
+    def __init__(self):
+        super().__init__()
+        self.api = None
+        self.user_id = 0
+        self.COUNT_LOADING_AUDIO = 200
+
+    def export(self, user_id=0, filename=""):
+        from math import ceil
+        from models import Audio
+        self.user_id = user_id if user_id else ...
+    
+        with open('DATA', encoding='utf-8') as data_json:
+                data_token = json.loads(data_json.read())
+                access_token = data_token["token"]
+                self.api = VKLight(dict(access_token=access_token))
+
+        data = []
+        count_calls = 1
+        count_audios = 0
+        try:
+            count_audios = self.api.call("audio.get", {
+                "user_id": self.user_id,
+                "count": 0,
+            })['response']['count']
+            
+            print(f"Получаю список аудиозаписей...")
+            if count_audios > self.COUNT_LOADING_AUDIO:
+                count_calls = ceil(count_audios / self.COUNT_LOADING_AUDIO)
+                for i in range(count_calls):
+                    try:
+                        audios = self.api.call('audio.get', {
+                                "user_id": self.user_id,
+                                "offset": self.COUNT_LOADING_AUDIO * i
+                            }
+                        )
+                        _data = [
+                            Audio(item) for item in audios['response']['items']
+                        ]
+                        data = [*data, *_data]
+
+                    except VKLightError as e:
+                        exit(e)
+
+                    if i != 0 and i % 10 == 0:
+                        sleep(9)
+            else:
+                audios = self.api.call('audio.get', {"user_id": self.user_id})
+                data = [Audio(item) for item in audios['response']['items']]
+        except Exception as e:
+            exit(e)
+
+        audios_list = []
+        for audio in data:
+            audios_list.append(audio.__dict__)
+
+        filename = f'{self.user_id}_EXPORTED_AUDIOS.json'
+        utils.save_json(filename, {
+            'expoted_time': datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
+            'user_id': self.user_id,
+            'count': count_audios,
+            'items': audios
+        })
+
+        exit(f'Список аудиозаписей сохранен в {filename}')
+
+
 def start():
     try:
-        if "--version" in sys.argv:
-            sys.exit(
-                config.ApplicationFullName
-            )
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            '-v', '--version', 
+            action="store_true", 
+            help='show this application version and exit'
+        )
+        parser.add_argument(
+            '-e', '--export',
+            dest='user_id',
+            default=0,
+            type=int,
+            help='export user music in JSON format'
+        )
+
+        args = parser.parse_args()
+
+        if args.version:
+            sys.exit(config.ApplicationFullName)
 
         auth_file = "DATA"
 
@@ -487,6 +572,11 @@ def start():
         app.setStyle('Fusion')
 
         if utils.file_exists(auth_file):
+            
+            if args.user_id:
+                CommandLineOptions().export(user_id=args.user_id)
+                exit()
+
             ex = MainWindow()
             ex.show()
             sys.exit(app.exec_())
