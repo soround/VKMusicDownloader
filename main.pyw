@@ -125,7 +125,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                         access_token=access_token,
                         receipt=receipt
                     )
-                )
+                )['response']['token']
 
             data = {
                 'access_token': access_token,
@@ -221,14 +221,10 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def loads_list_music(self):
         try:
-            with open(config.AuthFile, encoding='utf-8') as data_json:
-                data_token = json.loads(data_json.read())
-                access_token = data_token["access_token"]
-                refresh_token = data_token["token"]
-                try:
-                    self.user_id = data_token.get('user_id', None)
-                except ValueError:
-                    self.user_id = None
+            data_token = utils.read_json(config.AuthFile)
+            access_token = data_token["access_token"]
+            refresh_token = data_token["token"]
+            self.user_id = data_token.get('user_id', None)
 
             self.api = VKLight(dict(
                     access_token=access_token,
@@ -487,10 +483,8 @@ class CommandLineOptions():
         from models import Audio
         self.user_id = user_id if user_id else ...
     
-        with open(config.AuthFile, encoding='utf-8') as data_json:
-                data_token = json.loads(data_json.read())
-                access_token = data_token["token"]
-                self.api = VKLight(dict(access_token=access_token))
+        access_token = utils.read_json(config.AuthFile)['token']
+        self.api = VKLight(dict(access_token=access_token))
 
         data = []
         count_calls = 1

@@ -85,6 +85,11 @@ def save_json(filename, data):
         json.dump(data, file, indent=2, ensure_ascii=False)
 
 
+def read_json(filename):
+    with open(filename, 'r', encoding='utf-8') as file:
+        return json.loads(file.read())
+
+
 def downloads_files_in_wget(url, filename, progress):
     wget.download(url, filename, bar=progress)
 
