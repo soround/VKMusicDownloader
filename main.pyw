@@ -530,7 +530,7 @@ class CommandLineOptions():
             'expoted_time': datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
             'user_id': self.user_id,
             'count': count_audios,
-            'items': audios
+            'items': audios_list
         })
 
         exit(f'Список аудиозаписей сохранен в {filename}')
