@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from os.path import abspath
+from os.path import abspath, dirname
 
 
 class MetaSingleton(type):
@@ -20,9 +20,11 @@ class Config(metaclass=MetaSingleton):
 
 	ApplicationFullName = f"{ApplicationName} {ApplicationVersion} {ApplicationBranch}"
 
-	IconPath = abspath("assets/icon/vk_downloader_icon.ico")
-	IconPathV2 = abspath("assets/icon/downloader_icon.png")
-	IconPathV3 = abspath("assets/icon/downloader.png")
+	IconPath = dirname(abspath(__file__)) + "/assets/icon/vk_downloader_icon.ico"
+	IconPathV2 = dirname(abspath(__file__)) +  "/assets/icon/downloader_icon.png"
+	IconPathV3 = dirname(abspath(__file__)) +  "/assets/icon/downloader.png"
+
+	AuthFile = dirname(abspath(__file__)) + "/DATA"
 
 	License = "https://github.com/soround/VKMusicDownloader/blob/master/LICENSE"
 	SourceCode = "https://github.com/soround/VKMusicDownloader"

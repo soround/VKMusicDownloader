@@ -132,7 +132,7 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 'token': refresh_token,
                 'user_id': user_id
             }
-            utils.save_json("DATA", data)
+            utils.save_json(config.AuthFile, data)
 
             # Запуск главного окна
             self.window = MainWindow()
@@ -221,7 +221,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def loads_list_music(self):
         try:
-            with open('DATA', encoding='utf-8') as data_json:
+            with open(config.AuthFile, encoding='utf-8') as data_json:
                 data_token = json.loads(data_json.read())
                 access_token = data_token["access_token"]
                 refresh_token = data_token["token"]
@@ -248,7 +248,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                     )['response']['token']
 
                 self.api.access_token = refresh_token
-                utils.save_json('DATA', dict(
+                utils.save_json(config.AuthFile, dict(
                         access_token=access_token,
                         token=refresh_token,
                         user_id=self.user_id
@@ -459,8 +459,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         )
 
         if reply == QMessageBox.Yes:
-            if utils.file_exists("DATA"):
-                os.remove("DATA")
+            if utils.file_exists(config.AuthFile):
+                os.remove(config.AuthFile)
             else:
                 print("WTF?")
 
@@ -487,7 +487,7 @@ class CommandLineOptions():
         from models import Audio
         self.user_id = user_id if user_id else ...
     
-        with open('DATA', encoding='utf-8') as data_json:
+        with open(config.AuthFile, encoding='utf-8') as data_json:
                 data_token = json.loads(data_json.read())
                 access_token = data_token["token"]
                 self.api = VKLight(dict(access_token=access_token))
@@ -563,9 +563,10 @@ def start():
         if args.version:
             sys.exit(config.ApplicationFullName)
 
-        auth_file = "DATA"
+        auth_file = config.AuthFile
 
         app = QApplication(sys.argv)
+        print(f"{config.IconPath=}")
         app.setWindowIcon(QIcon(config.IconPath))
         app.setApplicationName(config.ApplicationName)
         app.setApplicationVersion(config.ApplicationVersion)
