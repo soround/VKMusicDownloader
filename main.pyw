@@ -566,7 +566,6 @@ def start():
         auth_file = config.AuthFile
 
         app = QApplication(sys.argv)
-        print(f"{config.IconPath=}")
         app.setWindowIcon(QIcon(config.IconPath))
         app.setApplicationName(config.ApplicationName)
         app.setApplicationVersion(config.ApplicationVersion)
