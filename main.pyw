@@ -326,52 +326,42 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.progressBar.setRange(0, 100)
         self.progressBar.setFormat("%p% (%v/%m)")
         self.label_3.setText("Загружается: ")
-        self.label.setText(
-            f"Всего аудиозаписей: {str(self.count_track)}" +
-            f" Выбрано: {0}" +
-            f" Загружено: {0}"
-        )
+        self.label.setText(f"Всего аудиозаписей: {str(self.count_track)} Выбрано: 0 Загружено: 0")
 
     @pyqtSlot(list)
     def fill_table(self, data):
         self.data = data
         QtWidgets.QTreeWidget.clear(self.treeWidget)
 
-        for i, count in enumerate(data, 1):
+        for i, audio in enumerate(data, 1):
 
             test = QtWidgets.QTreeWidgetItem(self.treeWidget)
 
             test.setText(0, str(i))
-            test.setText(1, count.artist)
-            test.setText(2, count.title)
-            test.setText(3, utils.time_duration(count.duration))
-            test.setText(4, utils.unix_time_stamp_convert(count.date))
+            test.setText(1, audio.artist)
+            test.setText(2, audio.title)
+            test.setText(3, utils.time_duration(audio.duration))
+            test.setText(4, utils.unix_time_stamp_convert(audio.date))
 
-            if count.is_hq:
-                if count.is_explicit:
+            if audio.is_hq:
+                if audio.is_explicit:
                     test.setText(5, "HQ (E)")
                 else:
                     test.setText(5, "HQ")
             else:
-                if count.is_explicit:
+                if audio.is_explicit:
                     test.setText(5, "E")
 
-            if count.url == "":
+            if audio.url == "":
                 test.setText(6, "Недоступно")
 
     @pyqtSlot(str)
     def show_error(self, error):
-        # self.pushButton_2.setEnabled(True)
-        QMessageBox.critical(self,
-                             "F*CK", f"{error}"
-                             )
+        QMessageBox.critical(self, "F*CK", f"{error}")
 
     @pyqtSlot(str)
     def show_warning(self, msg):
-        QMessageBox.warning(self,
-                            "Внимание",
-                            msg
-                            )
+        QMessageBox.warning(self, "Внимание", msg)
 
     @pyqtSlot(int)
     def set_text(self, count_track):
@@ -407,7 +397,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(int, str)
     def content_restricted(self, id_restrict, song_name):
-        message = ""
+        message = "Аудиозапись недоступна"
         if id_restrict == 1:
             message = f"Аудиозапись: {song_name} недоступна по решению правообладателя"
         elif id_restrict == 2:
