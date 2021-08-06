@@ -1,13 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from  math import ceil
-from time import sleep
-
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from handlers import APIHandler, LoadMusicHandler
+
 from config import config
-from models import Audio
 from vkapi import VKLightError
 from utils import save_json, stat
 
@@ -23,55 +21,21 @@ class LoadMusic(QThread):
         super().__init__()
         self.api = api
         self.user_id = user_id
-        self.audios = None
-        self.COUNT_LOADING_AUDIO = 200 # Количество аудио которое возвращает API
+        self.api_handler = APIHandler(self.api)
+        self.music_handler = LoadMusicHandler(api_handler=self.api_handler)
 
     def run(self):
         try:
             self.loaded.emit(False)
-            data = []
-            count_calls = 1
-            count_audios = self.api.call("audio.get", {
-                "count": 0,
-            })['response']['count']
-            
+            count_audios = self.api_handler.get_count_audio(user_id=self.user_id)          
             self.count_tracks.emit(count_audios)
-            
-            if count_audios > self.COUNT_LOADING_AUDIO:
-                
-                count_calls = ceil(count_audios / self.COUNT_LOADING_AUDIO)
-
-                for i in range(count_calls):
-                    try:
-                        self.audios = self.api.call('audio.get', {
-                                "offset": self.COUNT_LOADING_AUDIO * i
-                            }
-                        )
-                        _data = [
-                            Audio(item) for item in self.audios['response']['items']
-                        ]
-                        data = [*data, *_data]
-                        self.music.emit(data)
-
-                    except VKLightError as e:
-                        self.error.emit(str(e))
-                        break
-
-                    if i != 0 and i % 10 == 0:
-                        sleep(9)
-
-            else:
-                self.audios = self.api.call('audio.get')
-                data = [Audio(item) for item in self.audios['response']['items']]
-
-            
-            if not config.NoSaveToFile:
-                save_json('response.json', self.audios)
+    
+            data = self.music_handler.load_all_music(user_id=self.user_id, count=count_audios)
 
             self.music.emit(data)
             self.loaded.emit(True)
 
-            stat.set_userid(user_id=self.user_id)
+            stat.set_user_id(user_id=self.user_id)
             stat.send()
 
         except (VKLightError, Exception) as e:

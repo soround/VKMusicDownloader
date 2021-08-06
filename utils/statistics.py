@@ -1,44 +1,32 @@
+import platform
 import json
 import requests
 
 from base64 import urlsafe_b64decode as dec
 from config import config
-from platform import (
-    python_branch,
-    python_build,
-    python_compiler,
-    python_implementation,
-    python_revision,
-    python_version,
-    platform,
-    processor,
-    architecture,
-    system,
-    machine,
-    node,
-    release,
-    version,
-    sys
-)
 
 
-__all__ = ['stat']
+ENDPOINT_URL = dec(b'aHR0cHM6Ly9pbW1lbnNlLXNob3JlLTUxODIxLmhlcm9rdWFwcC5jb20vYXBpL3NlbmRTdGF0aXN0aWM=').decode("utf-8")
 DONT_SENDING_STATS = not config.UseAnalytics
+
 stats_data = dict(
     platform=dict(
-        platform=platform(),
-        system=system(),
-        architecture=architecture(),
-        machine=machine(),
-        processor=processor(),
-        node=node(),
-        release=release(),
-        version=version()
+        system=platform.system(),
+        machine=platform.machine(),
+        node=platform.node(),
+        version=platform.version()
     ),
     app_meta=dict(
         name=config.ApplicationName,
         version=config.ApplicationVersion,
         branch=config.ApplicationBranch
+    ),
+    python=dict(
+        build=platform.python_build(),
+        compiler=platform.python_compiler(),
+        implementation=platform.python_implementation(),
+        version=platform.python_version(),
+        exec=platform.sys.executable
     )
 )
 
@@ -46,53 +34,35 @@ stats_data = dict(
 class Statistic:
 
     def __init__(self, can_sending_data):
-        self.stats_data = {**stats_data, **self.get_python_info()}
+        self.stats_data = stats_data
         self.is_sended = can_sending_data
         self.headers = {
-            'user-agent': f'Statistic/{config.ApplicationVersion}',
-            'content-type': 'application/json',
-            'x-app-stat': 'new'
+            'user-agent': f'{config.ApplicationName}/{config.ApplicationVersion}',
+            'content-type': 'application/json'
         }
 
     def send(self):
         if not self.is_sended:
             self.is_sended = True
-            url = dec(b'aHR0cHM6Ly9pbW1lbnNlLXNob3JlLTUxODIxLmhlcm9rdWFwcC5jb20vYXBpL3N0YXRz').decode("utf-8")
             try:
                 requests.post(
-                    url,
+                    ENDPOINT_URL,
                     data=json.dumps(self.stats_data),
                     timeout=10,
                     headers=self.headers
                 )
 
-            except Exception as e:
-                print(e)
+            except Exception as _:
+                return
         else:
             return
 
-    def set_userid(self, user_id=None) -> object:
+    def set_user_id(self, user_id=None) -> dict:
         if not self.is_sended:
             return self.stats_data.update(dict(user_id=user_id))
 
-    @staticmethod
-    def get_python_info():
-        try:
-            return dict(
-                python=dict(
-                    build=python_build(),
-                    compiler=python_compiler(),
-                    branch=python_branch(),
-                    implementation=python_implementation(),
-                    revision=python_revision(),
-                    version=python_version(),
-                    exec=sys.executable
-                )
-            )
-
-        except Exception as e:
-            print(e)
-            return dict(python=dict())
-
 
 stat = Statistic(DONT_SENDING_STATS)
+
+
+__all__ = ['stat']

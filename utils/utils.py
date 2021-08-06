@@ -80,6 +80,10 @@ def time_duration(time) -> str:
     return str(datetime.timedelta(seconds=int(time)))
 
 
+def get_current_datetime() -> str:
+    return datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+
 def save_json(filename, data):
     with open(filename, 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=2, ensure_ascii=False)
@@ -92,20 +96,6 @@ def read_json(filename):
 
 def downloads_files_in_wget(url, filename, progress):
     wget.download(url, filename, bar=progress)
-
-
-def speed(downloaded_time, bytes_in) -> str:
-    try:
-        mark_speed = 'MB/s'
-        result = ((bytes_in / 2048) / downloaded_time)
-        if result > 1024:
-            result = result / 1024
-        else:
-            mark_speed = 'KB/s'
-        return f"{round(result, 2)} {mark_speed}"
-
-    except ZeroDivisionError:
-        return f"..."
 
 
 def get_user_agent(usage_application_name) -> str:

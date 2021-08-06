@@ -27,4 +27,4 @@ class Audio:
         return self.song_name
     
     def __repr__(self):
-        return self.song_name
+        return f"Audio<artist={self.artist}, title={self.title}, url={self.url}>"

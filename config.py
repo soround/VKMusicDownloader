@@ -13,24 +13,23 @@ class MetaSingleton(type):
 
 
 class Config(metaclass=MetaSingleton):
-	ApplicationName = "VKMusicDownloader"
-	ApplicationVersion = "1.1.17"
-	ApplicationBranch = "Public Pre-Release"
-	Description = "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
+    ApplicationName = "VKMusicDownloader"
+    ApplicationVersion = "1.1.17"
+    ApplicationBranch = "Public Pre-Release"
+    Description = "Кроссплатформенный клиент для массового скачивания музыки из ВКонтакте."
 
-	ApplicationFullName = f"{ApplicationName} {ApplicationVersion} {ApplicationBranch}"
+    ApplicationFullName = f"{ApplicationName} {ApplicationVersion} {ApplicationBranch}"
 
-	IconPath = dirname(abspath(__file__)) + "/assets/icon/vk_downloader_icon.ico"
-	IconPathV2 = dirname(abspath(__file__)) +  "/assets/icon/downloader_icon.png"
-	IconPathV3 = dirname(abspath(__file__)) +  "/assets/icon/downloader.png"
+    IconPath = dirname(abspath(__file__)) + "/assets/icon/vk_downloader_icon.ico"
+    IconPathV2 = dirname(abspath(__file__)) +  "/assets/icon/downloader_icon.png"
+    IconPathV3 = dirname(abspath(__file__)) +  "/assets/icon/downloader.png"
 
-	AuthFile = dirname(abspath(__file__)) + "/DATA"
+    AuthFile = dirname(abspath(__file__)) + "/DATA"
 
-	License = "https://github.com/soround/VKMusicDownloader/blob/master/LICENSE"
-	SourceCode = "https://github.com/soround/VKMusicDownloader"
+    License = "https://github.com/soround/VKMusicDownloader/blob/master/LICENSE"
+    SourceCode = "https://github.com/soround/VKMusicDownloader"
 
-	NoSaveToFile = True
-	UseAnalytics = True
+    UseAnalytics = True
 
 
 config = Config()

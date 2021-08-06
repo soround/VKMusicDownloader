@@ -9,14 +9,13 @@ import locale
 
 import utils
 
-from datetime import datetime
-
 from ui import auth
 from ui import tech_info
 from ui import mainwindow
 
 from config import config
 from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
+from handlers import APIHandler, LoadMusicHandler
 
 from threads import DownloadsFile, NetworkInfo, LoadMusic
 
@@ -37,21 +36,16 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
-
         self.statusBar().showMessage("2fa is supported :)")
-
         self.pushButton.clicked.connect(self.go)
         self.pushButton.setShortcut("Return")
-
         self.oauth = VKLightOauth(dict())
 
     def go(self):
         login = self.lineEdit.text()
         password = self.lineEdit_2.text()
         r = None
-
         self.statusBar().showMessage('Loading...')
-
         self.oauth = VKLightOauth(
             dict(
                 login=login,
@@ -59,7 +53,6 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                 proxy=self.action.isChecked()
             )
         )
-
         try:
             try:
                 r = self.oauth.go()
@@ -107,7 +100,6 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
         else:
 
             access_token = r['access_token']
-            refresh_token = ""
             user_id = r['user_id'] or ''
 
             api = VKLight(dict(
@@ -115,17 +107,12 @@ class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
                     proxy=self.action.isChecked()
                 )
             )
-
-            if not api.is_usage_domain_me():
-                from vkapi import receipt
-                self.statusBar().showMessage('Getting refresh_token')
-                refresh_token = api.call(
-                    "auth.refreshToken",
-                    dict(
-                        access_token=access_token,
-                        receipt=receipt
-                    )
-                )['response']['token']
+            api_handler = APIHandler(api=api)
+            
+            self.statusBar().showMessage('Getting refresh_token')
+            refresh_token = api_handler.refresh_token(
+                access_token=access_token
+            )['response']['token']
 
             data = {
                 'access_token': access_token,
@@ -207,6 +194,8 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.action_4.triggered.connect(self.tech_information)
         self.action_4.setShortcut("Ctrl+T")
         self.progressBar.setFormat("%p% (%v/%m)")
+        
+        self.PATH = os.getcwd()
 
         self.api = VKLight(dict())
         self.data = None
@@ -215,41 +204,21 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.is_loaded = False
         self.getSelected = []
         self.downloads_list = []
-        self.PATH = ""
         self.count_track = 0
-        self.user_id = None
+        self.user_id = 0
 
     def loads_list_music(self):
         try:
             data_token = utils.read_json(config.AuthFile)
             access_token = data_token["access_token"]
             refresh_token = data_token["token"]
-            self.user_id = data_token.get('user_id', None)
+            self.user_id = data_token["user_id"]
 
             self.api = VKLight(dict(
                     access_token=access_token,
                     proxy=self.action_5.isChecked()
                 )
             )
-
-            if not self.api.is_usage_domain_me():
-                from vkapi import receipt
-                if refresh_token == "":
-                    refresh_token = self.api.call(
-                        "auth.refreshToken",
-                        dict(
-                            access_token=access_token,
-                            receipt=receipt
-                        )
-                    )['response']['token']
-
-                self.api.access_token = refresh_token
-                utils.save_json(config.AuthFile, dict(
-                        access_token=access_token,
-                        token=refresh_token,
-                        user_id=self.user_id
-                    )
-                )
 
             self.lm = LoadMusic(self.api, self.user_id)
 
@@ -285,9 +254,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
             if started:
 
-                self.PATH = utils.get_path(self,
-                                           self.action_7.isChecked(), QFileDialog
-                                           )
+                self.PATH = utils.get_path(self,self.action_7.isChecked(), QFileDialog)
                 self.label_2.setText("Путь для скачивания: " + self.PATH)
                 self.pushButton.setText("Остановить")
 
@@ -379,30 +346,37 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(str)
     def aborted_download(self, err_msg):
-        QMessageBox.critical(self,
-                             "F*CK", f"Загрузка прервана. Причина: {err_msg}"
-                             )
+        QMessageBox.critical(
+            self,
+            "F*CK", f"Загрузка прервана. Причина: {err_msg}"
+        )
         self.set_ui_default()
 
     @pyqtSlot(str)
     def loading_audio(self, song_name):
-        self.label_3.setText(f"Загружается: {song_name[0:100]}")
+        self.label_3.setText(
+            f"Загружается: " + (f"{song_name[0:100]}..." if len(song_name) >= 100 else song_name)
+        )
 
     @pyqtSlot(str)
     def unavailable_audio(self, song_name):
-        QMessageBox.warning(self,
-                            "Внимание",
-                            f"Аудиозапись: {song_name} недоступна в вашем регионе"
-                            )
+        QMessageBox.warning(
+            self,
+            "Внимание",
+            f"Аудиозапись: {song_name} недоступна в вашем регионе"
+        )
 
     @pyqtSlot(int, str)
     def content_restricted(self, id_restrict, song_name):
-        message = "Аудиозапись недоступна"
+        message = f"Аудиозапись: {song_name} недоступна в вашем регионе"
+        
         if id_restrict == 1:
             message = f"Аудиозапись: {song_name} недоступна по решению правообладателя"
-        elif id_restrict == 2:
+        
+        if id_restrict == 2:
             message = f"Аудиозапись: {song_name} недоступна в вашем регионе по решению правообладателя"
-        elif id_restrict == 5:
+        
+        if id_restrict == 5:
             message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт." + \
                       "\nВы сможете её послушать после официального релиза"
 
@@ -469,55 +443,24 @@ class CommandLineOptions():
         self.COUNT_LOADING_AUDIO = 200
 
     def export(self, user_id=0, filename=""):
-        from math import ceil
-        from models import Audio
-        self.user_id = user_id if user_id else ...
-    
+        self.user_id = user_id
+        
         access_token = utils.read_json(config.AuthFile)['token']
         self.api = VKLight(dict(access_token=access_token))
 
-        data = []
-        count_calls = 1
-        count_audios = 0
-        try:
-            count_audios = self.api.call("audio.get", {
-                "user_id": self.user_id,
-                "count": 0,
-            })['response']['count']
-            
-            print(f"Получаю список аудиозаписей...")
-            if count_audios > self.COUNT_LOADING_AUDIO:
-                count_calls = ceil(count_audios / self.COUNT_LOADING_AUDIO)
-                for i in range(count_calls):
-                    try:
-                        audios = self.api.call('audio.get', {
-                                "user_id": self.user_id,
-                                "offset": self.COUNT_LOADING_AUDIO * i
-                            }
-                        )
-                        _data = [
-                            Audio(item) for item in audios['response']['items']
-                        ]
-                        data = [*data, *_data]
-
-                    except VKLightError as e:
-                        exit(e)
-
-                    if i != 0 and i % 10 == 0:
-                        sleep(9)
-            else:
-                audios = self.api.call('audio.get', {"user_id": self.user_id})
-                data = [Audio(item) for item in audios['response']['items']]
-        except Exception as e:
-            exit(e)
-
+        api_handler = APIHandler(self.api)
+        music_handler = LoadMusicHandler(api_handler=api_handler)
+        
+        count_audios = api_handler.get_count_audio(user_id=user_id)
+        data = music_handler.load_all_music(user_id=user_id, count=count_audios)
+        
         audios_list = []
         for audio in data:
             audios_list.append(audio.__dict__)
 
         filename = f'{self.user_id}_EXPORTED_AUDIOS.json'
         utils.save_json(filename, {
-            'expoted_time': datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
+            'expoted_time': utils.get_current_datetime(),
             'user_id': self.user_id,
             'count': count_audios,
             'items': audios_list
