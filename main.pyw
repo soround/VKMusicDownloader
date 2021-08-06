@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import argparse
 import sys
 import locale
 
@@ -11,6 +10,8 @@ from config import config
 from ui import Auth
 from ui import TechInfo
 from ui import MainWindow
+
+import cli
 from cli import ExportMusic
 
 from PyQt5.QtWidgets import QApplication
@@ -22,26 +23,8 @@ locale.setlocale(locale.LC_ALL, "")
 
 def start():
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            '-v', '--version', 
-            action="store_true", 
-            help='show this application version and exit'
-        )
-        parser.add_argument(
-            '-e', '--export',
-            dest='user_id',
-            default=0,
-            type=int,
-            help='export user music in JSON format'
-        )
-
-        args = parser.parse_args()
-
-        if args.version:
-            sys.exit(config.ApplicationFullName)
-
-        auth_file = config.AuthFile
+        args = cli.get_args()
+        if args.version: sys.exit(config.ApplicationFullName)
 
         app = QApplication(sys.argv)
         app.setWindowIcon(QIcon(config.IconPath))
@@ -49,10 +32,11 @@ def start():
         app.setApplicationVersion(config.ApplicationVersion)
         app.setStyle('Fusion')
 
-        if utils.file_exists(auth_file):
-            
+        auth_file = config.AuthFile
+        
+        if utils.file_exists(auth_file):   
             if args.user_id:
-                ExportMusic().export(user_id=args.user_id)
+                ExportMusic().export()
                 exit()
 
             ex = MainWindow()

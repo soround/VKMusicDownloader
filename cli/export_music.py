@@ -12,32 +12,83 @@ class ExportMusic:
 
     def __init__(self):
         super().__init__()
-        self.api = None
-        self.user_id = 0
-        self.COUNT_LOADING_AUDIO = 200
-
-    def export(self, user_id=0, filename=""):
-        self.user_id = user_id
+        self.api = ...
+        self.user_id = 1
+        self.filename = ''
         
-        access_token = utils.read_json(config.AuthFile)['token']
+        self.get_auth_data()
+
+    def export(self):
+        
+        EXPORT_RAW_JSON, EXPORT_CSV = range(2) 
+
+        self.user_id = input(f"ID пользователя (по-умолчанию: {self.user_id}): ") or self.user_id
+        self.update_filename()
+        self.filename = input(f"Имя файла (по-умолчанию: {self.filename}): ") or self.filename
+        
+        export_type = input(
+            f"Вариант экспорта ({EXPORT_RAW_JSON} - сырые данные в формате json, {EXPORT_CSV} - Экспорт в формате csv)"
+            f" (по-умолчанию: {EXPORT_CSV}): "
+        ) or EXPORT_CSV
+        export_type = int(export_type)
+
+        if export_type not in (EXPORT_RAW_JSON, EXPORT_CSV):
+            exit("Неизвестный тип экспорта")
+
+        data = self.get_audio()
+        
+        if export_type == EXPORT_RAW_JSON:
+            self.filename += '.json'
+            self.export_raw_json(self.filename, data)
+        
+        if export_type == EXPORT_CSV:
+            self.filename += '.csv'
+            self.export_to_csv(self.filename, data)
+
+        exit(f'Список аудиозаписей сохранен в {self.filename}')
+
+    def get_auth_data(self):
+        auth_data = utils.read_json(config.AuthFile)
+        access_token = auth_data['token']
+        self.user_id = auth_data['user_id']
+        self.update_filename()
         self.api = VKLight(dict(access_token=access_token))
 
-        api_handler = APIHandler(self.api)
-        music_handler = LoadMusicHandler(api_handler=api_handler)
-        
-        count_audios = api_handler.get_count_audio(user_id=user_id)
-        data = music_handler.load_all_music(user_id=user_id, count=count_audios)
-        
-        audios_list = []
-        for audio in data:
-            audios_list.append(audio.__dict__)
+    def update_filename(self):
+        self.filename = f'{self.user_id}_audio'
 
-        filename = f'{self.user_id}_EXPORTED_AUDIOS.json'
-        utils.save_json(filename, {
+    def export_raw_json(self, filename, data):
+        audios_list = [audio.__dict__ for audio in data]
+        utils.save_json(self.filename, {
             'expoted_time': utils.get_current_datetime(),
             'user_id': self.user_id,
-            'count': count_audios,
+            'count': len(data),
             'items': audios_list
         })
 
-        exit(f'Список аудиозаписей сохранен в {filename}')
+    def export_to_csv(self, filename, data):
+        headers = "id;artist;title;duration;date;is_explicit;is_hq;url"
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(f"{headers}\n")
+            
+            for i, audio in enumerate(data, 1):             
+                artist = audio.artist
+                title = audio.title
+                duration = utils.time_duration(audio.duration)
+                date = utils.unix_time_stamp_convert(audio.date)
+                is_explicit = audio.is_explicit
+                is_hq = audio.is_hq
+                url = audio.url
+                
+                file.write(
+                    f"{i};{artist};{title};{duration};{date};{is_explicit};{is_hq};{url}\n"
+                )
+
+    def get_audio(self):
+        api_handler = APIHandler(self.api)
+        music_handler = LoadMusicHandler(api_handler)
+        count_audios = api_handler.get_count_audio(user_id=self.user_id)
+        data = music_handler.load_all_music(user_id=self.user_id, count=count_audios)
+
+        return data
+
