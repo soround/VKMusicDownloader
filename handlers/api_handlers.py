@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 from math import ceil
 

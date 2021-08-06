@@ -13,19 +13,18 @@ class DownloadsFile(QThread):
     abort_download = pyqtSignal(str)
     loading_audio = pyqtSignal(str)
     unavailable_audio = pyqtSignal(str)
-    message = pyqtSignal(str)
+    message = pyqtSignal(int, int, int)
     content_restricted = pyqtSignal(int, str)
 
     def __init__(self, count_track, path, downloads_list=None, data=None):
         super().__init__()
-        self.count_track = count_track
-        self.downloads_list = downloads_list
-        self.selected_audios = len(self.downloads_list)
-        self.completed = 0
-        self.current_track = ''
-        self.msg = f"Всего аудиозаписей: {self.count_track}  Выбрано: {self.selected_audios}  Загружено: {self.completed}"
-        self.data = data
-        self.current_path = path
+        self.count_track: int = count_track
+        self.downloads_list: list = downloads_list
+        self.selected_audios: int = len(self.downloads_list)
+        self.completed: int = 0
+        self.current_track: str = ''
+        self.data: list = data
+        self.current_path: str = path
 
     def run(self):
         try:
@@ -35,12 +34,13 @@ class DownloadsFile(QThread):
 
                 if self.data[item].url == "":
                     if self.data[item].content_restricted:
-                        self.content_restricted.emit(int(self.data[item].content_restricted), self.current_track)
+                        content_restricted = int(self.data[item].content_restricted)
+                        self.content_restricted.emit(content_restricted, self.current_track)
                     else:
                         self.unavailable_audio.emit(self.current_track)
 
                 else:
-                    self.message.emit(self.msg)
+                    self.update_label(self.count_track, self.selected_audios, self.completed)
                     self.loading_audio.emit(self.current_track)
 
                     utils.downloads_files_in_wget(
@@ -50,6 +50,7 @@ class DownloadsFile(QThread):
                     )
 
                     self.completed += 1
+                    self.update_label(self.count_track, self.selected_audios, self.completed)
 
             self.finished.emit()
             self.loading_audio.emit('')
@@ -59,6 +60,8 @@ class DownloadsFile(QThread):
 
     # Magic. Do not touch.
     def update_progress(self, current, total, wight=80):
-        self.message.emit(self.msg)
         self.progress_range.emit(total)
         self.progress.emit(current)
+
+    def update_label(self, count, selected, completed):
+        self.message.emit(count, selected, completed)

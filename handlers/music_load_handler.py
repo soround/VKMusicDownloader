@@ -1,7 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 import time
 from math import ceil
+
 from .api_handlers import APIHandler, APIConstants
 from models import Audio
 
@@ -12,7 +14,7 @@ class LoadMusicHandler:
     def __init__(self, api_handler: APIHandler):
         self.api_handler = api_handler
 
-    def load_all_music(self, user_id, count=None) -> list(Audio):
+    def load_all_music(self, user_id, count=None) -> list:
         try:
             response = []
             if count > APIConstants.count_audios:

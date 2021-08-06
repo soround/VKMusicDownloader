@@ -1,208 +1,386 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainwindow.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.2
-#
-# WARNING! All changes made in this file will be lost!
-
-
 import os
+
+import utils
 from config import config
-from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(710, 495)
+from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
+from handlers import APIHandler, LoadMusicHandler
 
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
-        self.gridLayout.setObjectName("gridLayout")
-        self.frame = QtWidgets.QFrame(self.centralwidget)
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame.setObjectName("frame")
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.frame)
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.treeWidget = QtWidgets.QTreeWidget(self.frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.treeWidget.sizePolicy().hasHeightForWidth())
-        self.treeWidget.setSizePolicy(sizePolicy)
-        self.treeWidget.setMinimumSize(QtCore.QSize(621, 262))
-        self.treeWidget.setBaseSize(QtCore.QSize(0, 0))
-        font = QtGui.QFont()
-        font.setBold(False)
-        font.setItalic(False)
-        font.setUnderline(False)
-        font.setWeight(50)
-        font.setStrikeOut(False)
-        font.setStyleStrategy(QtGui.QFont.PreferAntialias)
-        self.treeWidget.setFont(font)
-        self.treeWidget.setMouseTracking(True)
-        self.treeWidget.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
-        self.treeWidget.setAcceptDrops(True)
-        self.treeWidget.setAutoFillBackground(False)
-        self.treeWidget.setLocale(QtCore.QLocale(QtCore.QLocale.Russian, QtCore.QLocale.Ukraine))
-        self.treeWidget.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.treeWidget.setMidLineWidth(1)
-        self.treeWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
-        self.treeWidget.setTabKeyNavigation(False)
-        self.treeWidget.setProperty("showDropIndicator", True)
-        self.treeWidget.setDragEnabled(False)
-        self.treeWidget.setDragDropOverwriteMode(False)
-        self.treeWidget.setAlternatingRowColors(True)
-        self.treeWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
-        self.treeWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.treeWidget.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.treeWidget.setRootIsDecorated(True)
-        self.treeWidget.setUniformRowHeights(False)
-        self.treeWidget.setAnimated(True)
-        self.treeWidget.setAllColumnsShowFocus(True)
-        self.treeWidget.setColumnCount(7)
-        self.treeWidget.setObjectName("treeWidget")
+from threads import DownloadsFile, LoadMusic
+
+from .window import auth
+from .window import mainwindow
+from .tech_info import TechInfo
+
+
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot, Qt
+
+
+# Окно авторизации
+class Auth(QtWidgets.QMainWindow, auth.Ui_MainWindow):
+
+    def __init__(self):
+        super().__init__()
+        self.window = None
+        self.setupUi(self)
+        self.setWindowIcon(QIcon(config.IconPath))
+        self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
+        self.statusBar().showMessage("2fa is supported :)")
+        self.pushButton.clicked.connect(self.go)
+        self.pushButton.setShortcut("Return")
+        self.oauth = VKLightOauth(dict())
+
+    def go(self):
+        login = self.lineEdit.text()
+        password = self.lineEdit_2.text()
+        r = None
+        self.statusBar().showMessage('Loading...')
+        self.oauth = VKLightOauth(
+            dict(
+                login=login,
+                password=password,
+                proxy=self.action.isChecked()
+            )
+        )
+        try:
+            try:
+                r = self.oauth.go()
+
+            except VKLightOauthError as e:
+                if 'need_validation' in e.error:
+                    if 'ban_info' in dir(e):
+                        return QMessageBox.critical(self, "F*CK", str(e))
+
+                    code, ok = QInputDialog.getText(
+                        self,
+                        "Подтвердите номер",
+                        "Мы отправили SMS с кодом на номер"
+                    )
+
+                    if ok:
+                        self.oauth = VKLightOauth(
+                            dict(
+                                login=login,
+                                password=password,
+                                proxy=self.action.isChecked(),
+                                code=code
+                            )
+                        )
+                        r = self.oauth.go()
+                else:
+                    raise e
+
+            except Exception as e:
+                raise e
+
+            self.statusBar().showMessage('Done!')
+
+        except VKLightOauthError as e:
+
+            if 'need_captcha' in e.error:
+                return QMessageBox.critical(self, 'F*CK', 'F*CKING CAPTHA')
+            else:
+                return QMessageBox.critical(self, 'F*CK', str(e))
+
+        except Exception as e:
+            self.statusBar().showMessage('Login failed :(')
+            QMessageBox.critical(self, "F*CK", str(e))
+
+        else:
+
+            access_token = r['access_token']
+            user_id = r['user_id'] or ''
+
+            api = VKLight(dict(
+                    access_token=access_token,
+                    proxy=self.action.isChecked()
+                )
+            )
+            api_handler = APIHandler(api=api)
+            
+            self.statusBar().showMessage('Getting refresh_token')
+            refresh_token = api_handler.refresh_token(
+                access_token=access_token
+            )['response']['token']
+
+            data = {
+                'access_token': access_token,
+                'token': refresh_token,
+                'user_id': user_id
+            }
+            utils.save_json(config.AuthFile, data)
+
+            # Запуск главного окна
+            self.window = MainWindow()
+            self.hide()
+            self.window.show()
+
+
+class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
+
+    def __init__(self):
+        super().__init__()
+        self.auth_window = None
+        self.tech_info_window = None
+        self.completed = 0
+        self.setupUi(self)
+        self.setWindowIcon(QIcon(config.IconPath))
+        self.setWindowFlags(QtCore.Qt.Window)
+
+        self.pushButton_2.clicked.connect(self.loads_list_music)
+        self.pushButton.clicked.connect(self.download)
+        self.pushButton.setCheckable(True)
+        self.action.triggered.connect(self.about_message)
+        self.action_2.setShortcut("Ctrl+Q")
+        self.action_2.triggered.connect(self.logout)
+        self.action_4.triggered.connect(self.tech_information)
+        self.action_4.setShortcut("Ctrl+T")
+        self.progressBar.setFormat("%p% (%v/%m)")
         
-        self.treeWidget.header().setDefaultSectionSize(119)
-        self.treeWidget.header().setHighlightSections(True)
-        self.treeWidget.header().setSortIndicatorShown(False)
+        self.PATH = os.getcwd()
 
-        self.treeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        self.treeWidget.header().setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
-        self.treeWidget.header().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
-        self.treeWidget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeToContents)
-        self.treeWidget.header().setSectionResizeMode(6, QtWidgets.QHeaderView.ResizeToContents)
+        self.api = VKLight(dict())
+        self.data = None
+        self.lm = None
+        self.th = None
+        self.is_loaded = False
+        self.getSelected = []
+        self.downloads_list = []
+        self.count_track = 0
+        self.user_id = 0
 
+    def loads_list_music(self):
+        try:
+            data_token = utils.read_json(config.AuthFile)
+            access_token = data_token["access_token"]
+            refresh_token = data_token["token"]
+            self.user_id = data_token["user_id"]
 
-        self.verticalLayout_3.addWidget(self.treeWidget)
-        self.pushButton_2 = QtWidgets.QPushButton(self.frame)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.verticalLayout_3.addWidget(self.pushButton_2)
-        self.frame_2 = QtWidgets.QFrame(self.frame)
-        self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_2.setObjectName("frame_2")
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.frame_2)
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.label = QtWidgets.QLabel(self.frame_2)
-        self.label.setObjectName("label")
-        self.verticalLayout_4.addWidget(self.label)
-        self.label_3 = QtWidgets.QLabel(self.frame_2)
-        self.label_3.setObjectName("label_3")
-        self.verticalLayout_4.addWidget(self.label_3)
+            self.api = VKLight(dict(
+                    access_token=access_token,
+                    proxy=self.action_5.isChecked()
+                )
+            )
 
-        self.verticalLayout_3.addWidget(self.frame_2)
-        self.frame_3 = QtWidgets.QFrame(self.frame)
-        self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_3.setObjectName("frame_3")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.frame_3)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.label_2 = QtWidgets.QLabel(self.frame_3)
-        self.label_2.setTabletTracking(False)
-        self.label_2.setToolTipDuration(0)
-        self.label_2.setTextFormat(QtCore.Qt.AutoText)
-        self.label_2.setObjectName("label_2")
-        self.verticalLayout_2.addWidget(self.label_2)
-        self.progressBar = QtWidgets.QProgressBar(self.frame_3)
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setTextDirection(QtWidgets.QProgressBar.BottomToTop)
-        self.progressBar.setObjectName("progressBar")
-        self.verticalLayout_2.addWidget(self.progressBar)
-        self.progressBar.raise_()
-        self.label_2.raise_()
-        self.verticalLayout_3.addWidget(self.frame_3)
-        self.pushButton = QtWidgets.QPushButton(self.frame)
-        self.pushButton.setObjectName("pushButton")
-        self.verticalLayout_3.addWidget(self.pushButton)
-        self.pushButton.raise_()
-        self.frame_3.raise_()
-        self.pushButton_2.raise_()
-        self.treeWidget.raise_()
-        self.frame_2.raise_()
-        self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
+            self.lm = LoadMusic(self.api, self.user_id)
 
-        MainWindow.setCentralWidget(self.centralwidget)
+            self.lm.music.connect(self.fill_table)
+            self.lm.error.connect(self.show_error)
+            self.lm.count_tracks.connect(self.set_count)
+            self.lm.warning_message_count_audios.connect(self.show_warning)
+            self.lm.loaded.connect(self.pushButton_2.setEnabled)
+
+            self.lm.start()
+            self.is_loaded = True
+
+        except (Exception, VKLightError)as ex:
+            QMessageBox.critical(self, "F*CK", str(ex))
+
+    def download(self, started):
+        try:
+            if not self.is_loaded:
+                self.pushButton.setChecked(False)
+                return QMessageBox.information(
+                    self,
+                    "Информация",
+                    "Вы не загрузили список аудиозаписей"
+                )
+
+            self.downloads_list = [int(i.text(0)) - 1 for i in self.treeWidget.selectedItems()]
+
+            if len(self.downloads_list) == 0:
+                self.pushButton.setChecked(False)
+                return QMessageBox.information(
+                    self, "Информация", "Ничего не выбрано."
+                )
+
+            if started:
+
+                self.PATH = utils.get_path(self,self.action_7.isChecked(), QFileDialog)
+                self.label_2.setText("Путь для скачивания: " + self.PATH)
+                self.pushButton.setText("Остановить")
+
+                self.th = DownloadsFile(
+                    self.count_track,
+                    self.PATH,
+                    self.downloads_list,
+                    self.data
+                )
+
+                self.th.progress_range.connect(self.progress)
+                self.th.progress.connect(self.progress_set_value)
+                self.th.loading_audio.connect(self.loading_audio)
+                self.th.message.connect(self.set_text)
+                self.th.unavailable_audio.connect(self.unavailable_audio)
+                self.th.content_restricted.connect(self.content_restricted)
+                self.th.finished.connect(self.finished_loader)
+                self.th.abort_download.connect(self.aborted_download)
+                self.th.start()
+
+            else:
+                self.th.terminate()
+                self.set_ui_default()
+                QMessageBox.information(self, "Информация", "Загрузка остановлена.")
+                del self.th
+
+        except Exception as e:
+            QMessageBox.critical(self, "F*CK", str(e))
+            self.pushButton.setText("Скачать")
+
+    def set_ui_default(self):
+        self.downloads_list = []
+        self.pushButton.setText("Скачать")
+        self.pushButton.setChecked(False)
+        self.progressBar.setValue(0)
+        self.progressBar.setRange(0, 100)
+        self.progressBar.setFormat("%p% (%v/%m)")
+        self.label_3.setText("Загружается: ")
+        self.label.setText(f"Всего аудиозаписей: {str(self.count_track)} Выбрано: 0 Загружено: 0")
+
+    @pyqtSlot(list)
+    def fill_table(self, data):
+        self.data = data
+        QtWidgets.QTreeWidget.clear(self.treeWidget)
+
+        for i, audio in enumerate(data, 1):
+
+            test = QtWidgets.QTreeWidgetItem(self.treeWidget)
+
+            test.setText(0, str(i))
+            test.setText(1, audio.artist)
+            test.setText(2, audio.title)
+            test.setText(3, utils.time_duration(audio.duration))
+            test.setText(4, utils.unix_time_stamp_convert(audio.date))
+
+            if audio.is_hq:
+                if audio.is_explicit:
+                    test.setText(5, "HQ (E)")
+                else:
+                    test.setText(5, "HQ")
+            else:
+                if audio.is_explicit:
+                    test.setText(5, "E")
+
+            if audio.url == "":
+                test.setText(6, "Недоступно")
+
+    @pyqtSlot(str)
+    def show_error(self, error):
+        QMessageBox.critical(self, "F*CK", f"{error}")
+
+    @pyqtSlot(str)
+    def show_warning(self, msg):
+        QMessageBox.warning(self, "Внимание", msg)
+
+    @pyqtSlot(int)
+    def set_count(self, count=0, selected=0, completed=0):
+        self.count_track = count
+        self.set_text(count, selected, completed)
+
+    @pyqtSlot(int, int, int)
+    def set_text(self, count=0, selected=0, completed=0):
+        self.label.setText(
+            f"Всего аудиозаписей: {count}" +
+            f" Выбрано: {selected}" +
+            f" Загружено: {completed}"
+        )
+
+    @pyqtSlot()
+    def finished_loader(self):
+        QMessageBox.information(self, "Информация", "Аудиозаписи загружены")
+        self.set_ui_default()
+
+    @pyqtSlot(str)
+    def aborted_download(self, err_msg):
+        QMessageBox.critical(
+            self,
+            "F*CK", f"Загрузка прервана. Причина: {err_msg}"
+        )
+        self.set_ui_default()
+
+    @pyqtSlot(str)
+    def loading_audio(self, song_name):
+        self.label_3.setText(
+            f"Загружается: " + (f"{song_name[0:100]}..." if len(song_name) >= 100 else song_name)
+        )
+
+    @pyqtSlot(str)
+    def unavailable_audio(self, song_name):
+        QMessageBox.warning(
+            self,
+            "Внимание",
+            f"Аудиозапись: {song_name} недоступна в вашем регионе"
+        )
+
+    @pyqtSlot(int, str)
+    def content_restricted(self, id_restrict, song_name):
+        message = f"Аудиозапись: {song_name} недоступна в вашем регионе"
         
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 708, 21))
-        self.menubar.setObjectName("menubar")
-        self.menu = QtWidgets.QMenu(self.menubar)
-        self.menu.setObjectName("menu")
-        self.menu_2 = QtWidgets.QMenu(self.menubar)
-        self.menu_2.setObjectName("menu_2")
-        self.menu_3 = QtWidgets.QMenu(self.menubar)
-        self.menu_3.setObjectName("menu_3")
-        MainWindow.setMenuBar(self.menubar)
-
-        self.action = QtWidgets.QAction(MainWindow)
-        self.action.setObjectName("action")
-
-        self.action_2 = QtWidgets.QAction(MainWindow)
-        self.action_2.setObjectName("action_2")
+        if id_restrict == 1:
+            message = f"Аудиозапись: {song_name} недоступна по решению правообладателя"
         
-        # self.action_3 = QtWidgets.QAction(MainWindow)
-        # self.action_3.setObjectName("action_3")
-
-        self.action_4 = QtWidgets.QAction(MainWindow)
-        self.action_4.setObjectName("action_4")
-
-        self.action_5 = QtWidgets.QAction(MainWindow)
-        self.action_5.setObjectName("action_5")
-        self.action_5.setCheckable(True)
-
-        self.action_7 = QtWidgets.QAction(MainWindow)
-        self.action_7.setObjectName("action_7")
-        self.action_7.setCheckable(True)
-
-        self.menu.addAction(self.action_2)
-        self.menu_2.addAction(self.action_4)
-        # self.menu_2.addAction(self.action_3)
-        self.menu_2.addAction(self.action)
-
-
-        self.menu_3.addAction(self.action_7)
-        self.menu_3.addAction(self.action_5)
-
-        self.menubar.addAction(self.menu.menuAction())
-        self.menubar.addAction(self.menu_3.menuAction())
-        self.menubar.addAction(self.menu_2.menuAction())
-
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", config.ApplicationFullName))
-
-        self.treeWidget.setSortingEnabled(False)
-        self.treeWidget.headerItem().setText(0, _translate("MainWindow", "Номер"))
-        self.treeWidget.headerItem().setText(1, _translate("MainWindow", "Исполнитель"))
-        self.treeWidget.headerItem().setText(2, _translate("MainWindow", "Название"))
-        self.treeWidget.headerItem().setText(3, _translate("MainWindow", "Длительность"))
-        self.treeWidget.headerItem().setText(4, _translate("MainWindow", "Дата добавления"))
-        self.treeWidget.headerItem().setText(5, _translate("MainWindow", "Tags"))
-        self.treeWidget.headerItem().setText(6, _translate("MainWindow", "Доступность"))
+        if id_restrict == 2:
+            message = f"Аудиозапись: {song_name} недоступна в вашем регионе по решению правообладателя"
         
-        self.pushButton_2.setText(_translate("MainWindow", "Загрузить список аудиозаписей"))
-        
-        self.label.setText(_translate("MainWindow", "Всего аудиозаписей: Выбрано: Загружено:"))
-        self.label_3.setText(_translate("MainWindow", "Загружается: "))
-        self.label_2.setText(_translate("MainWindow", f"Путь для скачивания: {os.getcwd()}"))
-        
-        self.progressBar.setFormat(_translate("MainWindow", ""))
-        
-        self.pushButton.setText(_translate("MainWindow", "Скачать"))
-        
-        self.menu.setTitle(_translate("MainWindow", "Аккаунт"))
-        self.menu_2.setTitle(_translate("MainWindow", "Помощь"))
-        self.menu_3.setTitle(_translate("MainWindow", "Настройки"))
-        
-        self.action.setText(_translate("MainWindow", "О программе"))
-        self.action_2.setText(_translate("MainWindow", "Выйти из аккаунта"))
-        # self.action_3.setText(_translate("MainWindow", "Помощь проекту"))
-        self.action_4.setText(_translate("MainWindow", "Техническая информация"))
-        self.action_5.setText(_translate("MainWindow", "Включить прокси"))
-        self.action_7.setText(_translate("MainWindow", "Выбрать папку для скачивания"))
+        if id_restrict == 5:
+            message = f"Доступ к аудиозаписи: {song_name} вскоре будет открыт." + \
+                      "\nВы сможете её послушать после официального релиза"
+
+        QMessageBox.warning(self, "Внимание", message)
+
+    @pyqtSlot(int)
+    def progress(self, _range):
+        self.progressBar.setFormat("%p% ( %v KB / %m KB )")
+        self.progressBar.setRange(0, int(_range / 1024))
+
+    @pyqtSlot(int)
+    def progress_set_value(self, value):
+        self.progressBar.setValue(int(value / 1024))
+
+    def about_message(self):
+        QMessageBox.about(
+            self, "О программе",
+            "<b>" + config.ApplicationName
+            + "</b> - " + config.Description + "<br><br><b>Версия: </b>"
+            + config.ApplicationVersion
+            + "<br><b>Стадия: </b> "
+            + config.ApplicationBranch
+            + "<br><br>Данное ПО распространяется по лицензии "
+            + "<a href=" + config.License + ">MIT</a>, исходный код доступен"
+            + " на <a href=" + config.SourceCode + ">GitHub</a>"
+        )
+
+    def tech_information(self):
+        self.tech_info_window = TechInfo(
+            VKLight(dict(proxy=self.action_5.isChecked())).baseURL,
+            VKLightOauth(dict(proxy=self.action_5.isChecked())).baseURL
+        )
+
+    def logout(self):
+        reply = QMessageBox.question(
+            self,
+            "Выход из аккаунта", "Вы точно хотите выйти из аккаунта?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            if utils.file_exists(config.AuthFile):
+                os.remove(config.AuthFile)
+            else:
+                print("WTF?")
+
+            if utils.file_exists("response.json"):
+                os.remove("response.json")
+
+            self.auth_window = Auth()
+            self.auth_window.show()
+            self.hide()
+        else:
+            pass
