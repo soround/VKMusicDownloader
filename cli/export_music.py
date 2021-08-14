@@ -1,15 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import csv
 import utils
-
 from config import config
 from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
 from handlers import APIHandler, LoadMusicHandler
 
 
 class ExportMusic:
-
     def __init__(self):
         super().__init__()
         self.api = ...
@@ -19,8 +18,8 @@ class ExportMusic:
         self.get_auth_data()
 
     def export(self):
-        
-        EXPORT_RAW_JSON, EXPORT_CSV = range(2) 
+        """"""
+        EXPORT_RAW_JSON, EXPORT_CSV = range(2)
 
         self.user_id = input(f"ID пользователя (по-умолчанию: {self.user_id}): ") or self.user_id
         self.update_filename()
@@ -67,22 +66,23 @@ class ExportMusic:
         })
 
     def export_to_csv(self, filename, data):
-        headers = "id;artist;title;duration;date;is_explicit;is_hq;url"
+        headers = ("id", "artist", "title", "duration", "date", "is_explicit" ,"is_hq", "url")
+        # TODO: Нужно что-то сделать с кодировкой в Windows
         with open(filename, 'w', encoding='utf-8') as file:
-            file.write(f"{headers}\n")
-            
-            for i, audio in enumerate(data, 1):             
-                artist = audio.artist
-                title = audio.title
-                duration = utils.time_duration(audio.duration)
-                date = utils.unix_time_stamp_convert(audio.date)
-                is_explicit = audio.is_explicit
-                is_hq = audio.is_hq
-                url = audio.url
-                
-                file.write(
-                    f"{i};{artist};{title};{duration};{date};{is_explicit};{is_hq};{url}\n"
+            writer = csv.writer(file, delimiter=';')
+            writer.writerow(headers) 
+            for i, audio in enumerate(data, 1):
+                row = (
+                    i,
+                    audio.artist,
+                    audio.title,
+                    utils.time_duration(audio.duration),
+                    utils.unix_time_stamp_convert(audio.date),
+                    audio.is_explicit,
+                    audio.is_hq,
+                    audio.url
                 )
+                writer.writerow(row)
 
     def get_audio(self):
         api_handler = APIHandler(self.api)
