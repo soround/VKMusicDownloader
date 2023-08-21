@@ -178,9 +178,5 @@ compile_commands.json
 # QtCreator local machine specific files for imported projects
 *creator.user*
 
-# File response and DATA
-response.json
-DATA
-
 
 # End of https://www.gitignore.io/api/qt,python

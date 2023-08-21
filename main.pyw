@@ -2,51 +2,44 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import locale
 
-import utils
-from config import config
-
-from ui import Auth
-from ui import TechInfo
-from ui import MainWindow
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication
 
 import cli
+import utils
 from cli import ExportMusic
-
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon
-
-
-locale.setlocale(locale.LC_ALL, "")
+from config import config
+from ui import Auth
+from ui import MainWindow
 
 
 def start():
     try:
         args = cli.get_args()
-        if args.version: sys.exit(config.ApplicationFullName)
+        if args.version:
+            sys.exit(config.ApplicationFullName)
 
         app = QApplication(sys.argv)
         app.setWindowIcon(QIcon(config.IconPath))
         app.setApplicationName(config.ApplicationName)
         app.setApplicationVersion(config.ApplicationVersion)
         app.setStyle('Fusion')
-
         auth_file = config.AuthFile
-        
-        if utils.file_exists(auth_file):   
+
+        if utils.file_exists(auth_file):
             if args.user_id:
                 ExportMusic().export()
                 exit()
 
             ex = MainWindow()
             ex.show()
-            sys.exit(app.exec_())
+            sys.exit(app.exec())
 
         else:
             ex = Auth()
             ex.show()
-            sys.exit(app.exec_())
+            sys.exit(app.exec())
 
     except Exception as e:
         print("F*CK: " + str(e))

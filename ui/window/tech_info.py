@@ -2,21 +2,34 @@
 
 # Form implementation generated from reading ui file 'tech_info.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.2
+# Created by: PyQt6 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtWidgets
+
 
 class Ui_Form(object):
+    def __init__(self):
+        self.pushButton_3 = None
+        self.label_6 = None
+        self.label_5 = None
+        self.label_2 = None
+        self.label = None
+        self.label_4 = None
+        self.label_3 = None
+        self.gridLayout_2 = None
+        self.frame = None
+        self.gridLayout = None
+
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(341, 175)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setObjectName("gridLayout")
         self.frame = QtWidgets.QFrame(Form)
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.frame.setObjectName("frame")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.frame)
         self.gridLayout_2.setObjectName("gridLayout_2")

@@ -6,6 +6,7 @@ from os.path import abspath, dirname
 
 class MetaSingleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(MetaSingleton, cls).__call__(*args, **kwargs)
@@ -20,16 +21,16 @@ class Config(metaclass=MetaSingleton):
 
     ApplicationFullName = f"{ApplicationName} {ApplicationVersion} {ApplicationBranch}"
 
-    IconPath = dirname(abspath(__file__)) + "/assets/icon/vk_downloader_icon.ico"
-    IconPathV2 = dirname(abspath(__file__)) +  "/assets/icon/downloader_icon.png"
-    IconPathV3 = dirname(abspath(__file__)) +  "/assets/icon/downloader.png"
+    IconPath = dirname(abspath(__file__)) + "/assets/icon/vk_downloader_icon.png"
+    IconPathV2 = dirname(abspath(__file__)) + "/assets/icon/downloader_icon.png"
+    IconPathV3 = dirname(abspath(__file__)) + "/assets/icon/downloader.png"
 
     AuthFile = dirname(abspath(__file__)) + "/DATA"
 
     License = "https://github.com/soround/VKMusicDownloader/blob/master/LICENSE"
     SourceCode = "https://github.com/soround/VKMusicDownloader"
 
-    UseAnalytics = True
+    UseAnalytics = False
 
 
 config = Config()

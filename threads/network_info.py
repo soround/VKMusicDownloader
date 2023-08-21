@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from PyQt6.QtCore import QThread, pyqtSignal
+
 import utils
-from PyQt5.QtCore import QThread, pyqtSignal
 
 
 class NetworkInfo(QThread):
-
     internal_ip = pyqtSignal(str)
     external_ip = pyqtSignal(str)
     hostname = pyqtSignal(str)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from utils import fix_filename, get_mp3_url
+from utils import fix_filename
 
 
 class Audio:
@@ -21,10 +21,10 @@ class Audio:
         return f'{fix_filename(self.song_name)}.mp3'
 
     def get_url(self):
-        return get_mp3_url(self.url)
+        return self.url
 
     def __str__(self):
         return self.song_name
-    
+
     def __repr__(self):
         return f"Audio<artist={self.artist}, title={self.title}, url={self.url}>"

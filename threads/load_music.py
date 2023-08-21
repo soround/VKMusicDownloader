@@ -1,13 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from handlers import APIHandler, LoadMusicHandler
-
-from config import config
+from utils import stat
 from vkapi import VKLightError
-from utils import save_json, stat
 
 
 class LoadMusic(QThread):
@@ -27,9 +25,9 @@ class LoadMusic(QThread):
     def run(self):
         try:
             self.loaded.emit(False)
-            count_audios = self.api_handler.get_count_audio(user_id=self.user_id)          
+            count_audios = self.api_handler.get_count_audio(user_id=self.user_id)
             self.count_tracks.emit(count_audios)
-    
+
             data = self.music_handler.load_all_music(user_id=self.user_id, count=count_audios)
 
             self.music.emit(data)

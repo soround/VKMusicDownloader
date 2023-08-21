@@ -10,8 +10,8 @@ def create_parser() -> argparse.ArgumentParser:
 
 def create_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
-        '-v', '--version', 
-        action="store_true", 
+        '-v', '--version',
+        action="store_true",
         help='show this application version and exit'
     )
     parser.add_argument(

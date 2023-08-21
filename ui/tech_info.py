@@ -1,20 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import utils
+from PyQt6.QtCore import pyqtSlot, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QWidget
+
 from config import config
-
-from vkapi import VKLightOauth, VKLight
-from vkapi import VKLightError, VKLightOauthError
-
 from threads import NetworkInfo
-
 from .window import tech_info
 
-from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot, Qt
 
 # Техническая информация
 class TechInfo(QWidget, tech_info.Ui_Form):
@@ -23,7 +17,7 @@ class TechInfo(QWidget, tech_info.Ui_Form):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QIcon(config.IconPath))
-        self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
 
         self.pushButton_3.clicked.connect(self.exit)
         self.pushButton_3.setShortcut("Return")

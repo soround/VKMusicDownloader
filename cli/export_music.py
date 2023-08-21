@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import csv
+
 import utils
 from config import config
-from vkapi import VKLightOauth, VKLight, VKLightError, VKLightOauthError
 from handlers import APIHandler, LoadMusicHandler
+from models import Audio
+from vkapi import VKLight
 
 
 class ExportMusic:
@@ -14,35 +16,35 @@ class ExportMusic:
         self.api = ...
         self.user_id = 1
         self.filename = ''
-        
+
         self.get_auth_data()
 
     def export(self):
         """"""
-        EXPORT_RAW_JSON, EXPORT_CSV = range(2)
+        export_raw_json, export_csv = range(2)
 
         self.user_id = input(f"ID пользователя (по-умолчанию: {self.user_id}): ") or self.user_id
         self.update_filename()
         self.filename = input(f"Имя файла (по-умолчанию: {self.filename}): ") or self.filename
-        
+
         export_type = input(
-            f"Вариант экспорта ({EXPORT_RAW_JSON} - сырые данные в формате json, {EXPORT_CSV} - Экспорт в формате csv)"
-            f" (по-умолчанию: {EXPORT_CSV}): "
-        ) or EXPORT_CSV
+            f"Вариант экспорта ({export_raw_json} - сырые данные в формате json, {export_csv} - Экспорт в формате csv)"
+            f" (по-умолчанию: {export_csv}): "
+        ) or export_csv
         export_type = int(export_type)
 
-        if export_type not in (EXPORT_RAW_JSON, EXPORT_CSV):
+        if export_type not in (export_raw_json, export_csv):
             exit("Неизвестный тип экспорта")
 
         data = self.get_audio()
-        
-        if export_type == EXPORT_RAW_JSON:
+
+        if export_type == export_raw_json:
             self.filename += '.json'
-            self.export_raw_json(self.filename, data)
-        
-        if export_type == EXPORT_CSV:
+            self.export_raw_json(data)
+
+        if export_type == export_csv:
             self.filename += '.csv'
-            self.export_to_csv(self.filename, data)
+            self.export_to_csv(data)
 
         exit(f'Список аудиозаписей сохранен в {self.filename}')
 
@@ -56,21 +58,21 @@ class ExportMusic:
     def update_filename(self):
         self.filename = f'{self.user_id}_audio'
 
-    def export_raw_json(self, filename, data):
+    def export_raw_json(self, data):
         audios_list = [audio.__dict__ for audio in data]
         utils.save_json(self.filename, {
-            'expoted_time': utils.get_current_datetime(),
+            'exported_time': utils.get_current_datetime(),
             'user_id': self.user_id,
             'count': len(data),
             'items': audios_list
         })
 
-    def export_to_csv(self, filename, data):
-        headers = ("id", "artist", "title", "duration", "date", "is_explicit" ,"is_hq", "url")
+    def export_to_csv(self, data):
+        headers = ("id", "artist", "title", "duration", "date", "is_explicit", "is_hq", "url")
         # TODO: Нужно что-то сделать с кодировкой в Windows
-        with open(filename, 'w', encoding='utf-8') as file:
+        with open(self.filename, 'w', encoding='utf-8') as file:
             writer = csv.writer(file, delimiter=';')
-            writer.writerow(headers) 
+            writer.writerow(headers)
             for i, audio in enumerate(data, 1):
                 row = (
                     i,
@@ -84,11 +86,10 @@ class ExportMusic:
                 )
                 writer.writerow(row)
 
-    def get_audio(self):
+    def get_audio(self) -> list[Audio]:
         api_handler = APIHandler(self.api)
         music_handler = LoadMusicHandler(api_handler)
         count_audios = api_handler.get_count_audio(user_id=self.user_id)
         data = music_handler.load_all_music(user_id=self.user_id, count=count_audios)
 
         return data
-
