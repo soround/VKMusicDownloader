@@ -199,7 +199,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                         "Выберите папку для скачивания",
                         "",
                         QFileDialog.Option.ShowDirsOnly,
-                    )
+                    ) or self.path
 
                 self.label_2.setText("Путь для скачивания: " + self.path)
                 self.pushButton.setText("Остановить")
