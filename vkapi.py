@@ -8,7 +8,8 @@ from utils import get_user_agent
 
 host: str = "api.vk.com"
 host_oauth: str = "oauth.vk.com"
-apiVersion: str = "5.89"
+api_version: str = "5.89"
+timeout: int = 10
 
 headers: Dict[str, str] = {
     'user-agent': get_user_agent(True),
@@ -76,26 +77,26 @@ class VKLightOauth:
     def __init__(self, param: Dict = None):
         if param is None:
             param = dict()
-        self.__param = param
         self.oauth_param = {
             'grant_type': 'password',
             'client_id': '',
             'client_secret': '',
-            'username': self.__param.get('login', ''),
-            'password': self.__param.get('password', ''),
-            '2fa_supported': self.__param.get('2fa_supported', 1),
-            'code': self.__param.get('code', None),
-            'captcha_sid': self.__param.get('captcha_sid', None),
-            'captcha_key': self.__param.get('captcha_key', None),
+            'username': param.get('login', ''),
+            'password': param.get('password', ''),
+            '2fa_supported': param.get('2fa_supported', 1),
+            'code': param.get('code', None),
+            'captcha_sid': param.get('captcha_sid', None),
+            'captcha_key': param.get('captcha_key', None),
             'force_sms': 1
         }
-        self.host = self.__param.get("host", host_oauth)
-        self.baseURL = f"https://{self.host}/token/"
+        self.timeout = timeout
+        self.host = param.get("host", host_oauth)
+        self.base_url = f"https://{self.host}/token/"
 
-        self.apiVersion = self.__param.get("v", apiVersion)
-        self.url_param = {'v': self.apiVersion}
+        self.api_version = param.get("v", api_version)
+        self.url_param = {'v': self.api_version}
 
-        self.application_name = self.__param.get('application_name', 'android')
+        self.application_name = param.get('application_name', 'android')
         self.oauth_data = {
             **self.oauth_param,
             **clients_credential.get(self.application_name)
@@ -104,12 +105,11 @@ class VKLightOauth:
     def go(self) -> dict:
         try:
             resp = requests.post(
-                self.baseURL,
+                self.base_url,
                 params=self.url_param,
                 data=self.oauth_data,
                 headers=headers,
-                timeout=10
-                # verify=False
+                timeout=self.timeout
             ).json()
         except Exception as e:
             raise e
@@ -127,12 +127,13 @@ class VKLight:
         if param is None:
             param = dict()
         self.access_token = param.get("access_token", "")
-        self.apiVersion = param.get("v", apiVersion)
+        self.api_version = param.get("v", api_version)
         self.lang = param.get("lang", "ru")
 
+        self.timeout = timeout
         self.host = param.get("host", host)
-        self.baseURL = f"https://{self.host}/method/"
-        self.url_param = dict(lang=self.lang, v=self.apiVersion)
+        self.base_url = f"https://{self.host}/method/"
+        self.url_param = dict(lang=self.lang, v=self.api_version)
 
     def __call__(self, method: str, args=None):
         if args is None:
@@ -146,12 +147,11 @@ class VKLight:
 
         try:
             resp = requests.post(
-                f"{self.baseURL}{method}",
+                f"{self.base_url}{method}",
                 data=args,
                 params=self.url_param,
                 headers=headers,
-                timeout=10
-                # verify=False
+                timeout=self.timeout
             ).json()
 
         except Exception as e:
