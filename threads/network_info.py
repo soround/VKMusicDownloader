@@ -21,12 +21,11 @@ class NetworkInfo(QThread):
 
     def run(self):
         try:
-            self.internal_ip.emit(utils.get_internal_ip())
             data = utils.get_network_info()
             loc = f"{data['country']}, {data['region']}, {data['city']}"
-            self.external_ip.emit(data['ip'])
-            if 'hostname' in data:
-                self.hostname.emit(data['hostname'])
+            self.internal_ip.emit(utils.get_internal_ip())
+            self.external_ip.emit(data.get('ip'))
+            self.hostname.emit(data.get('hostname', ''))
             self.location.emit(loc)
 
         except Exception as e:

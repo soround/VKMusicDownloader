@@ -12,7 +12,6 @@ class LoadMusic(QThread):
     music = pyqtSignal(list)
     error = pyqtSignal(str)
     count_tracks = pyqtSignal(int)
-    warning_message_count_audios = pyqtSignal(str)
     loaded = pyqtSignal(bool)
 
     def __init__(self, api, user_id):

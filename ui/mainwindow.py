@@ -164,7 +164,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.lm.music.connect(self.fill_table)
             self.lm.error.connect(self.show_error)
             self.lm.count_tracks.connect(self.set_count)
-            self.lm.warning_message_count_audios.connect(self.show_warning)
             self.lm.loaded.connect(self.pushButton_2.setEnabled)
 
             self.lm.start()
@@ -192,7 +191,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 )
 
             if started:
-                self.path = os.getcwd()
                 if self.action_7.isChecked():
                     self.path = QFileDialog.getExistingDirectory(
                         self,
@@ -270,10 +268,6 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     def show_error(self, error):
         QMessageBox.critical(self, "F*CK", f"{error}")
 
-    @pyqtSlot(str)
-    def show_warning(self, msg):
-        QMessageBox.warning(self, "Внимание", msg)
-
     @pyqtSlot(int)
     def set_count(self, count=0, selected=0, completed=0):
         self.count_track = count
@@ -303,7 +297,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     @pyqtSlot(str)
     def loading_audio(self, song_name):
         self.label_3.setText(
-            f"Загружается: " + (f"{song_name[0:100]}..." if len(song_name) >= 100 else song_name)
+            f"Загружается:{song_name[0:100]}..."
         )
 
     @pyqtSlot(int)

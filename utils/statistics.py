@@ -56,7 +56,8 @@ class Statistic:
                     headers=self.headers
                 )
 
-            except Exception as _:
+            except Exception as e:
+                print(e)
                 return
         else:
             return
