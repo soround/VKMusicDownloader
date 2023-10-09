@@ -235,7 +235,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.progressBar.setRange(0, 100)
         self.progressBar.setFormat("%p% (%v/%m)")
         self.label_3.setText("Загружается: ")
-        self.label.setText(f"Всего аудиозаписей: {str(self.count_track)} Выбрано: 0 Загружено: 0")
+        self.set_text(count=self.count_track, selected=0, completed=0)
 
     @pyqtSlot(list)
     def fill_table(self, data):
@@ -275,11 +275,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(int, int, int)
     def set_text(self, count=0, selected=0, completed=0):
-        self.label.setText(
-            f"Всего аудиозаписей: {count}" +
-            f" Выбрано: {selected}" +
-            f" Загружено: {completed}"
-        )
+        self.label.setText(f"Всего аудиозаписей: {count} Выбрано: {selected} Загружено: {completed}")
 
     @pyqtSlot()
     def finished_loader(self):
@@ -296,9 +292,7 @@ class MainWindow(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     @pyqtSlot(str)
     def loading_audio(self, song_name):
-        self.label_3.setText(
-            f"Загружается:{song_name[0:100]}..."
-        )
+        self.label_3.setText(f"Загружается: {song_name}")
 
     @pyqtSlot(int)
     def progress(self, _range):
