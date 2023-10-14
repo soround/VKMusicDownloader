@@ -4,12 +4,22 @@ from typing import Union, Any, Dict
 
 import requests
 
-from utils import get_user_agent
+from config import config
+
 
 host: str = "api.vk.com"
 host_oauth: str = "oauth.vk.com"
 api_version: str = "5.89"
 timeout: int = 10
+
+
+def get_user_agent(usage_application_name) -> str:
+    if usage_application_name:
+        return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a;' \
+               f'{config.ApplicationName} {config.ApplicationVersion}; ru; 1920x1080)'
+    else:
+        return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a; Unknown; ru; 1920x1080)'
+
 
 headers: Dict[str, str] = {
     'user-agent': get_user_agent(True),

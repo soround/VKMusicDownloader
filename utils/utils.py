@@ -10,7 +10,6 @@ import socket
 import requests
 
 import wget
-from config import config
 
 
 def fix_filename(filename) -> str:
@@ -65,11 +64,3 @@ def read_json(filename):
 
 def downloads_files_in_wget(url, filename, progress):
     wget.download(url, out=filename, bar=progress)
-
-
-def get_user_agent(usage_application_name) -> str:
-    if usage_application_name:
-        return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a;' \
-               f'{config.ApplicationName} {config.ApplicationVersion}; ru; 1920x1080)'
-    else:
-        return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a; Unknown; ru; 1920x1080)'
