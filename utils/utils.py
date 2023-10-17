@@ -13,8 +13,8 @@ import wget
 
 
 def fix_filename(filename) -> str:
-    valid_letters: str = f'<>|/\\?*":'
-    return ''.join(c for c in filename if c not in valid_letters)[0:126]
+    invalid_letters: str = f'<>|/\\?*":'
+    return ''.join(c for c in filename if c not in invalid_letters)[0:126]
 
 
 def file_exists(path: str) -> bool:
