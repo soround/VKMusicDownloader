@@ -4,8 +4,8 @@
 import datetime
 import json
 import os
-import re
 import socket
+import string
 
 import requests
 
@@ -13,14 +13,12 @@ import wget
 
 
 def fix_filename(filename) -> str:
-    return re.sub(r'[\\/:*?\"<>|\n\r\xa0]', "", filename[0:126])
+    valid_letters: str = f"-_.() {string.ascii_letters}{string.digits}"
+    return ''.join(c for c in filename if c in valid_letters)[0:126]
 
 
-def file_exists(path) -> bool:
-    try:
-        return os.path.exists(path)
-    except OSError:
-        return False
+def file_exists(path: str) -> bool:
+    return os.path.exists(path)
 
 
 def check_connection(url):

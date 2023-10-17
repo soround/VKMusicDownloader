@@ -33,4 +33,4 @@ class Config(metaclass=MetaSingleton):
     UseAnalytics = False
 
 
-config = Config()
+config: Config = Config()

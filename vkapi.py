@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from typing import Union, Any, Dict
+from typing import Union, Dict
 
 import requests
 
 from config import config
-
 
 host: str = "api.vk.com"
 host_oauth: str = "oauth.vk.com"
@@ -13,12 +12,9 @@ api_version: str = "5.89"
 timeout: int = 10
 
 
-def get_user_agent(usage_application_name) -> str:
-    if usage_application_name:
-        return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a;' \
-               f'{config.ApplicationName} {config.ApplicationVersion}; ru; 1920x1080)'
-    else:
-        return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a; Unknown; ru; 1920x1080)'
+def get_user_agent(usage_application_name=True) -> str:
+    application_name: str = config.ApplicationFullName if usage_application_name else 'Unknown'
+    return f'VKAndroidApp/8.42-17051 (Android 14; SDK 32; arm64-v8a; {application_name}; ru; 1920x1080)'
 
 
 headers: Dict[str, str] = {
@@ -31,10 +27,7 @@ receipt: str = "JSv5FBbXbY:APA91bF2K9B0eh61f2WaTZvm62GOHon3-vElmVq54ZOL5PHpFkIc8
                "wae8YEUKkEzLCcUC5V4bTWNNPbjTxgZRvQ-PLONDMZWo_6hwiqhlMM7gIZHM2K2KhvX-9oCcyD1ERw4"
 
 # client_id и client_secret приложений
-clients_credential: Dict[Union[str, Any], Union[Union[
-    dict[str, Union[int, str]], dict[str, Union[int, str]], dict[str, Union[int, str]], dict[str, Union[int, str]],
-    dict[str, Union[int, str]], dict[str, Union[int, str]], dict[str, Union[int, str]], dict[str, Union[int, str]],
-    dict[str, Union[int, str]], dict[str, Union[int, str]]], Any]] = {
+clients_credential: Dict[str, Dict[str, Union[int, str]]] = {
     'android': {
         'client_id': 2274003,
         'client_secret': 'hHbZxrka2uZ6jB1inYsH'
