@@ -5,7 +5,6 @@ import datetime
 import json
 import os
 import socket
-import string
 
 import requests
 
@@ -13,8 +12,9 @@ import wget
 
 
 def fix_filename(filename) -> str:
-    invalid_letters: str = f'<>|/\\?*":'
-    return ''.join(c for c in filename if c not in invalid_letters)[0:126]
+    invalid_letters: list = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+    sanitized_filename: str = ''.join(c for c in filename if c not in invalid_letters)
+    return sanitized_filename.translate(str.maketrans('', '', '\0'))[:255]
 
 
 def file_exists(path: str) -> bool:
